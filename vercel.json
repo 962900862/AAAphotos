@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/enhance/**": {
+    "/api/enhance": {
       "maxDuration": 60
     }
   },
