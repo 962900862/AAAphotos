@@ -9,7 +9,7 @@ import { randomUUID } from 'crypto';
 // 将exec转换为Promise版本
 const execPromise = promisify(exec);
 
-// 设置最大处理时间（秒）- 修改为Hobby计划的最大值
+// 设置最大执行时间为60秒（Hobby计划的最大值）
 export const maxDuration = 60;
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,6 +31,18 @@ interface JsonResult {
  * 图像增强API处理函数
  */
 export async function POST(request: NextRequest) {
+  // 创建超时保护机制
+  let timeoutId: NodeJS.Timeout | undefined = undefined;
+  const timeoutPromise = new Promise<NextResponse>((resolve) => {
+    timeoutId = setTimeout(() => {
+      console.log("⚠️ 处理即将超时，提前返回结果");
+      resolve(NextResponse.json({
+        success: false,
+        error: "处理时间超过限制，请尝试上传更小的图片或降低质量设置"
+      }, { status: 408 }));
+    }, 55000); // 设置为55秒，留5秒缓冲时间
+  });
+
   // 创建临时文件来存储base64数据
   let tempFilePath: string | null = null;
   
@@ -43,6 +55,7 @@ export async function POST(request: NextRequest) {
     // 检查图片是否存在
     if (!imageFile) {
       console.error('❌ 未找到图片文件');
+      clearTimeout(timeoutId!);
       return NextResponse.json({ error: '未找到图片文件' }, { status: 400 });
     }
     
@@ -162,17 +175,20 @@ export async function POST(request: NextRequest) {
           if (jsonResult && jsonResult.success && jsonResult.imageUrl) {
             // 4. 返回处理结果
             console.log(`\n✅ 图像处理成功! 最终URL: ${jsonResult.imageUrl}\n`);
+            clearTimeout(timeoutId!);
             return NextResponse.json({
               success: true,
               imageUrl: jsonResult.imageUrl,
             });
           } else if (jsonResult) {
             console.error(`\n❌ 处理失败: ${jsonResult.error || '未知错误'}\n`);
+            clearTimeout(timeoutId!);
             return NextResponse.json({ 
               error: jsonResult.error || '处理图片失败' 
             }, { status: 500 });
           } else {
             console.error('\n❌ 未能从Python输出中提取有效的JSON结果');
+            clearTimeout(timeoutId!);
             return NextResponse.json({ 
               error: '未能从Python输出中提取有效的JSON结果' 
             }, { status: 500 });
@@ -182,12 +198,14 @@ export async function POST(request: NextRequest) {
           console.error(parseError);
           console.error('\nPython脚本输出内容:');
           console.error(stdout);
+          clearTimeout(timeoutId!);
           return NextResponse.json({ 
             error: '解析处理结果失败' 
           }, { status: 500 });
         }
       } else {
         console.error('\n❌ Python脚本没有输出');
+        clearTimeout(timeoutId!);
         return NextResponse.json({ 
           error: 'Python脚本没有输出' 
         }, { status: 500 });
@@ -195,11 +213,15 @@ export async function POST(request: NextRequest) {
     } catch (pythonError) {
       console.error('\n❌ 执行Python脚本出错:');
       console.error(pythonError);
+      clearTimeout(timeoutId!);
       return NextResponse.json({ 
         error: '执行Python脚本时出错，请确保已安装Python及必要的依赖包' 
       }, { status: 500 });
     }
   } catch (error) {
+    // 清除超时定时器
+    if (timeoutId) clearTimeout(timeoutId);
+    
     console.error('\n❌ 处理图片时出错:');
     console.error(error);
     return NextResponse.json({ 
