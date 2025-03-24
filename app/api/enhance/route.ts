@@ -247,21 +247,6 @@ export async function POST(request: NextRequest) {
         }
       }
       
-      // 添加更明显的日志，直接检查并输出result.data[0].url
-      if (result.data.length > 0 && result.data[0] && typeof result.data[0] === 'object') {
-        const firstItemUrl = (result.data[0] as any).url;
-        console.log(`\n📋 直接查看result.data[0].url: ${firstItemUrl}`);
-        
-        // 如果还没有获取到URL，使用直接检查到的URL
-        if (!processedImageUrl && firstItemUrl) {
-          processedImageUrl = firstItemUrl;
-          console.log(`📌 使用直接检查到的URL: ${processedImageUrl}`);
-        }
-      }
-      
-      // 打印完整的数据结构，便于调试
-      console.log('\n📊 完整的result.data结构:');
-      console.log(JSON.stringify(result.data, null, 2));
     
       // 高亮打印找到的URL
       console.log('\n======================================');
