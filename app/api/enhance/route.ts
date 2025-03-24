@@ -179,7 +179,13 @@ export async function POST(request: NextRequest) {
         }, { status: 500 }));
       }
       
-      const processedImageUrl = result.data[0];
+      // 正确提取图像URL
+      const processedImageData = result.data[0];
+      // 检查返回的数据是对象还是字符串
+      const processedImageUrl = typeof processedImageData === 'object' && processedImageData.url 
+        ? processedImageData.url  // 如果是对象，获取url属性
+        : processedImageData;     // 如果是字符串，直接使用
+
       console.log(`🌟 获取到处理后的图像URL: ${processedImageUrl}`);
       
       // 从CodeFormer获取处理后的图像内容
@@ -240,7 +246,7 @@ export async function POST(request: NextRequest) {
         console.log('⚠️ 由于AI处理失败，返回原图URL');
         clearTimeout(timeoutId!);
         return setCorsHeaders(NextResponse.json({ 
-          success: true,
+              success: true,
           imageUrl: directUploadUrl,
           isPermanent: true,
           isOriginal: true,
