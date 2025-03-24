@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { client } from '@gradio/client';
-import { Client } from "@gradio/client";
 
 // 设置最大执行时间为60秒（Hobby计划的最大值）
 export const maxDuration = 60;
@@ -147,24 +146,26 @@ export async function POST(request: NextRequest) {
     // 3. 使用Gradio客户端调用CodeFormer API
     console.log(`\n🔄 开始连接CodeFormer API... 这可能需要一些时间`);
     console.log(`⏱️ [${new Date().toISOString()}] 开始连接`);
-
+    
     try {
+      // 创建Gradio客户端连接
+      const app = await client("sczhou/CodeFormer");
+      console.log(`✅ [${new Date().toISOString()}] 已连接到CodeFormer API`);
       
-
-      const response_0 = await fetch("https://pic1.imgdb.cn/item/67e1105a0ba3d5a1d7e28d22.png");
-      const exampleImage = await response_0.blob();
-                  
-      const client = await Client.connect("sczhou/CodeFormer");
-      const result = await client.predict("/predict", { 
-              image: exampleImage, 		
-          face_align: true, 		
-          background_enhance: true, 		
-          face_upsample: true, 		
-          upscale: 3, 		
-          codeformer_fidelity: 0, 
-      });
+      console.log(`🧩 开始处理图像... 这通常需要10-30秒`);
+      console.log(`⏱️ [${new Date().toISOString()}] 开始AI处理`);
       
-      console.log(result.data);
+      // 直接调用CodeFormer模型API
+      const result = await app.predict("/predict", [
+        imageBlob,          // 图像
+        true,               // face_align
+        true,               // background_enhance
+        true,               // face_upsample
+        2,                  // upscale
+        0.7,                // codeformer_fidelity
+      ]);
+      
+      console.log(`✅ [${new Date().toISOString()}] 图像处理完成`);
       
       // 检查API返回的结果
       console.log('🔍 检查API返回结果');
