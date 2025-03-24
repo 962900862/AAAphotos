@@ -1,0 +1,1016 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { 
+  ImagePlus, 
+  Sparkles, 
+  Share2, 
+  Wand2, 
+  X,
+  Download,
+  BookOpen,
+  MessageCircle,
+  MaximizeIcon,
+  ChevronDown,
+  Star,
+  CheckCircle2,
+  ZapIcon,
+  AlertTriangle
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
+
+export default function Home() {
+  const [progress, setProgress] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [processedImage, setProcessedImage] = useState<string | null>(null);
+  const [processedImages, setProcessedImages] = useState<{
+    wechat: string | null;
+    xiaohongshu: string | null;
+    '4k': string | null;
+  }>({
+    wechat: null,
+    xiaohongshu: null,
+    '4k': null
+  });
+  const [processedDimensions, setProcessedDimensions] = useState<{
+    wechat: { width: number, height: number };
+    xiaohongshu: { width: number, height: number };
+    '4k': { width: number, height: number };
+  }>({
+    wechat: { width: 0, height: 0 },
+    xiaohongshu: { width: 0, height: 0 },
+    '4k': { width: 0, height: 0 }
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [mode, setMode] = useState<'wechat' | 'xiaohongshu' | '4k'>('wechat');
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+  const [modeChanged, setModeChanged] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  // 全屏功能
+  const toggleFullscreen = () => {
+    if (!imageContainerRef.current) return;
+    
+    if (!document.fullscreenElement) {
+      // 进入全屏
+      imageContainerRef.current.requestFullscreen()
+        .then(() => {
+          setIsFullscreen(true);
+        })
+        .catch(err => {
+          toast({
+            variant: "destructive",
+            title: "全屏模式失败",
+            description: `Error: ${err.message}`,
+          });
+        });
+    } else {
+      // 退出全屏
+      document.exitFullscreen()
+        .then(() => {
+          setIsFullscreen(false);
+        })
+        .catch(err => {
+          console.error("退出全屏失败:", err);
+        });
+    }
+  };
+
+  // 监听全屏变化
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && (file.type === "image/jpeg" || file.type === "image/png")) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        setUploadedImage(dataUrl);
+        setProcessedImage(null);
+        // 重置所有模式的处理结果
+        setProcessedImages({
+          wechat: null,
+          xiaohongshu: null,
+          '4k': null
+        });
+        setProgress(0);
+        
+        // 获取图片尺寸
+        const img = new Image();
+        img.onload = () => {
+          setImageDimensions({ width: img.width, height: img.height });
+        };
+        img.src = dataUrl;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.type === "image/jpeg" || file.type === "image/png")) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        setUploadedImage(dataUrl);
+        setProcessedImage(null);
+        // 重置所有模式的处理结果
+        setProcessedImages({
+          wechat: null,
+          xiaohongshu: null,
+          '4k': null
+        });
+        setProgress(0);
+        
+        // 获取图片尺寸
+        const img = new Image();
+        img.onload = () => {
+          setImageDimensions({ width: img.width, height: img.height });
+        };
+        img.src = dataUrl;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const removeUploadedImage = () => {
+    setUploadedImage(null);
+    setProcessedImage(null);
+    // 重置所有模式的处理结果
+    setProcessedImages({
+      wechat: null,
+      xiaohongshu: null,
+      '4k': null
+    });
+    setProcessedDimensions({
+      wechat: { width: 0, height: 0 },
+      xiaohongshu: { width: 0, height: 0 },
+      '4k': { width: 0, height: 0 }
+    });
+    setProgress(0);
+    setModeChanged(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const processImage = () => {
+    if (!uploadedImage) return;
+    
+    setIsProcessing(true);
+    setProgress(0);
+    setModeChanged(false);
+    
+    // 创建一个新的Image对象来获取图片尺寸
+    const img = new Image();
+    img.onload = async () => {
+      // 进度条逻辑改进
+      let progressInterval: NodeJS.Timeout | undefined = undefined;
+      const startProgress = () => {
+        if (progressInterval) {
+          clearInterval(progressInterval);
+        }
+        progressInterval = setInterval(() => {
+          setProgress((prev) => {
+            if (prev >= 90) {
+              clearInterval(progressInterval);
+              return 90;
+            }
+            return prev + (prev < 30 ? 1 : (prev < 60 ? 0.5 : 0.2));
+          });
+        }, 100);
+      };
+      
+      // 开始进度
+      startProgress();
+      
+      try {
+        // 根据不同模式进行处理
+        if (mode === '4k') {
+          // 4K蓝光模式：调用API进行处理
+          
+          // 将图片转换为Blob
+          const response = await fetch(uploadedImage);
+          const blob = await response.blob();
+          
+          // 创建FormData对象
+          const formData = new FormData();
+          formData.append('image', blob, 'image.jpg');
+          
+          // 发送请求到API
+          const apiResponse = await fetch('https://aa-aphotos.vercel.app/api/enhance', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          if (!apiResponse.ok) {
+            const errorText = await apiResponse.text();
+            console.error('API响应错误:', errorText);
+            throw new Error(`API返回错误: ${apiResponse.status}`);
+          }
+          
+          const result = await apiResponse.json();
+          
+          if (result.success && result.imageUrl) {
+            // 设置处理后的图片
+            const finalImage = await fetch(result.imageUrl);
+            const finalImageBlob = await finalImage.blob();
+            const finalImageUrl = URL.createObjectURL(finalImageBlob);
+            
+            // 保存当前模式下的处理结果
+            setProcessedImages(prev => ({
+              ...prev,
+              [mode]: finalImageUrl
+            }));
+            
+            setProcessedImage(finalImageUrl);
+            setProgress(100);
+            setIsProcessing(false);
+            
+            // 获取处理后图片尺寸
+            const processedImg = new Image();
+            processedImg.onload = () => {
+              setProcessedDimensions(prev => ({
+                ...prev,
+                [mode]: { width: processedImg.width, height: processedImg.height }
+              }));
+            };
+            processedImg.src = finalImageUrl;
+            
+            // 显示成功提示
+            toast({
+              title: "4K蓝光处理完成",
+              description: "图片处理成功，可以下载或直接分享。",
+            });
+          } else {
+            throw new Error(result.error || '图片处理失败');
+          }
+        } else {
+          // 计算目标尺寸，根据不同模式进行处理
+          let targetWidth: number = 0;
+          let targetHeight: number = 0;
+          
+          if (mode === 'wechat') {
+            // 朋友圈模式：短边1080px，长边等比例缩放
+            if (img.width < img.height) {
+              // 图片是竖向的，宽度是短边
+              targetWidth = 1080;
+              targetHeight = Math.round((img.height / img.width) * 1080);
+            } else {
+              // 图片是横向的，高度是短边
+              targetHeight = 1080;
+              targetWidth = Math.round((img.width / img.height) * 1080);
+            }
+          } else if (mode === 'xiaohongshu') {
+            // 小红书模式：3:4比例，尺寸为1280*1706像素
+            targetWidth = 1280;
+            targetHeight = 1706;
+          }
+
+          // 创建canvas来调整图片尺寸
+          const canvas = document.createElement('canvas');
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+          const ctx = canvas.getContext('2d');
+          
+          if (ctx) {
+            // 绘制调整后的图片（居中裁剪方式）
+            if (mode === 'xiaohongshu') {
+              // 小红书模式下执行居中裁剪
+              // 先填充白色背景
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0, 0, targetWidth, targetHeight);
+              
+              // 计算如何以3:4比例裁剪和缩放图片
+              const targetRatio = 3 / 4; // 目标比例3:4
+              const imgRatio = img.width / img.height;
+              
+              let sw: number, sh: number, sx: number, sy: number, dw: number, dh: number, dx: number, dy: number;
+              
+              if (imgRatio > targetRatio) {
+                // 原图比例宽于3:4，需要裁掉两侧
+                sh = img.height;
+                sw = sh * targetRatio;
+                sx = (img.width - sw) / 2;
+                sy = 0;
+                dw = targetWidth;
+                dh = targetHeight;
+                dx = 0;
+                dy = 0;
+              } else {
+                // 原图比例窄于3:4，需要裁掉上下
+                sw = img.width;
+                sh = sw / targetRatio;
+                sx = 0;
+                sy = (img.height - sh) / 2;
+                dw = targetWidth;
+                dh = targetHeight;
+                dx = 0;
+                dy = 0;
+              }
+              
+              // 居中绘制图像，保持3:4比例
+              ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+            } else {
+              // 朋友圈模式下执行等比例缩放
+              ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+            }
+            
+            // 将canvas内容转换为图片
+            const processedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+            
+            // 保存当前模式下的处理结果
+            setProcessedImages(prev => ({
+              ...prev,
+              [mode]: processedDataUrl
+            }));
+            
+            // 设置处理后的图片
+            setProcessedImage(processedDataUrl);
+            
+            // 完成处理
+            setProgress(100);
+            setIsProcessing(false);
+            
+            // 获取处理后图片尺寸
+            const processedImg = new Image();
+            processedImg.onload = () => {
+              setProcessedDimensions(prev => ({
+                ...prev,
+                [mode]: { width: processedImg.width, height: processedImg.height }
+              }));
+            };
+            processedImg.src = processedDataUrl;
+            
+            // 显示成功提示
+            toast({
+              title: `${mode === 'wechat' ? '朋友圈' : '小红书'}处理完成`,
+              description: "图片处理成功，好用的话记得分享哦~。",
+            });
+          } else {
+            // 如果无法获取canvas上下文，回退到原图
+            setProcessedImage(uploadedImage);
+            setProgress(100);
+            setIsProcessing(false);
+            
+            // 使用toast显示错误
+            toast({
+              variant: "destructive",
+              title: "处理图片失败",
+              description: "图片处理过程中遇到错误，已恢复为原图。请尝试其他图片或稍后重试。",
+            });
+          }
+        }
+      } catch (error) {
+        console.error('处理图片时出错:', error);
+        // 处理失败时回退到原图
+        setProcessedImage(uploadedImage);
+        setProgress(100);
+        setIsProcessing(false);
+        
+        // 使用toast显示错误
+        toast({
+          variant: "destructive",
+          title: "处理图片失败",
+          description: error instanceof Error ? error.message : "图片处理过程中遇到错误，已恢复为原图。请尝试其他图片或稍后重试。",
+        });
+      } finally {
+        // 确保清除进度条计时器
+        clearInterval(progressInterval);
+      }
+    };
+    
+    img.onerror = () => {
+      // 加载图片失败
+      setIsProcessing(false);
+      setProgress(0);
+      
+      // 使用toast显示错误
+      toast({
+        variant: "destructive",
+        title: "图片加载失败",
+        description: "无法加载图片，请检查图片格式是否支持或尝试其他图片。",
+      });
+    };
+    
+    img.src = uploadedImage;
+  };
+
+  const downloadImage = () => {
+    if (!processedImage) return;
+    
+    // 创建链接元素
+    const link = document.createElement('a');
+    link.href = processedImage;
+    link.download = mode === 'wechat' 
+      ? `wechat_enhanced_${new Date().getTime()}.jpg` 
+      : mode === 'xiaohongshu'
+      ? `xiaohongshu_${new Date().getTime()}.jpg`
+      : `4K_enhanced_${new Date().getTime()}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // 下载成功提示
+    toast({
+      title: "图片下载成功",
+      description: "您可以立即分享到社交平台。",
+    });
+  };
+
+  const CrystalLogo = () => (
+    <div className="relative w-32 h-32 mb-12 floating-icon">
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-28 h-28 bg-gradient-to-r from-[#4f46e5] via-[#ec4899] to-[#4f46e5] rounded-full opacity-50 animate-pulse" />
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-24 h-24 bg-gradient-to-r from-[#ec4899] via-[#4f46e5] to-[#ec4899] rounded-full opacity-30 animate-pulse delay-75" />
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-20 h-20 bg-gradient-to-r from-[#4f46e5] via-[#ec4899] to-[#4f46e5] rounded-full opacity-20 animate-pulse delay-150" />
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <Wand2 className="w-14 h-14 text-white drop-shadow-[0_0_15px_rgba(79,70,229,0.5)]" />
+      </div>
+    </div>
+  );
+
+  const testimonials = [
+    {
+      name: "Yuxiii",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8yZ-tixAWh88x5K25PoqBgkfEFQm-vWh-nA&s",
+      comment: "照片质量提升很明显，朋友圈照片终于不会被压得模糊了！",
+      rating: 5
+    },
+    {
+      name: "小巷子",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCCRl9eKjcwK30bqLP25AJzr1vMYBwMBBDDQ&s",
+      comment: "界面简单易用，效果非常专业，推荐给需要的朋友。",
+      rating: 5
+    },
+    {
+      name: "喜欢蛋糕",
+      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_AWxjVhXrye2Tg0VGJfu_JeyrI9ovkao28w&s",
+      comment: "一键处理，方便快捷，照片清晰度提升很多！",
+      rating: 5
+    }
+  ];
+
+  const faqs = [
+    {
+      question: "如何使用这个工具？",
+      answer: "只需将您的图片拖入上传区域或点击选择文件，选择需要的格式（朋友圈、小红书或4K蓝光），点击开始处理即可。处理完成后可以下载或直接分享。"
+    },
+    {
+      question: "支持哪些图片格式？",
+      answer: "目前支持主流图片格式，包括JPG、PNG、WEBP等。建议上传原图以获得最佳效果。"
+    },
+    {
+      question: "处理后的图片会占用更多空间吗？",
+      answer: "不会，我们采用智能压缩技术，在提升画质的同时保持合理的文件大小。"
+    },
+    {
+      question: "小红书封面和朋友圈图片有什么区别？",
+      answer: "小红书封面会按照平台推荐的3:4比例进行优化处理再进行像素ai增强，而朋友圈图片则保持短边1080px的高清标准。"
+    },
+    {
+      question: "什么是4K蓝光增强？",
+      answer: "我们使用CodeFormer AI模型在线处理，能够智能提升图片分辨率至4K级别，同时增强细节和色彩，修复人脸和背景，使照片更加清晰锐利，呈现出蓝光级别的高清画质。此服务完全免费。"
+    }
+  ];
+
+  return (
+    <main className="min-h-screen hero-gradient text-white">
+      <Toaster />
+      <div className="mx-auto max-w-[1168px] px-4 py-12 md:py-20">
+        {/* Hero Section */}
+        <div className="flex flex-col items-center text-center mb-8 md:mb-12">
+          <CrystalLogo />
+          <h1 className="text-4xl md:text-5xl font-bold shine-text mb-2">
+            AI 图片增强工具 | 照片超清处理
+          </h1>
+          <h2 className="text-2xl md:text-3xl font-medium text-[#ec4899] mb-6">
+            Socialphotps.site
+          </h2>
+          <div className="flex flex-wrap gap-2 justify-center mb-8">
+            {['图片增强工具', '照片修复', 'AI图像超分', 'CodeFormer模型', '自媒体神器', '一键4K增强'].map((tag, index) => (
+              <span 
+                key={index} 
+                className="px-4 py-1.5 rounded-full bg-gradient-to-r from-[#4f46e5]/30 to-[#ec4899]/30 text-sm font-medium text-white backdrop-blur-md border border-white/20 hover:border-white/40 hover:from-[#4f46e5]/40 hover:to-[#ec4899]/40 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(236,72,153,0.3)] transform hover:scale-105 duration-300"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          <p className="text-lg md:text-xl text-gray-300 max-w-2xl leading-relaxed mb-8">
+            专业的AI图片(Photo Enhancer Pro)增强工具，使用顶尖CodeFormer AI模型，一键修复微信压缩失真，提升照片清晰度，让您的朋友圈照片展现完美画质
+          </p>
+          <div className="mt-4">
+            <Button className="button-primary rounded-full px-8 py-6 text-lg">
+              <Sparkles className="w-5 h-5 mr-2" />
+              免费，无限制使用
+            </Button>
+          </div>
+        </div>
+
+        {/* AI 增强设置 - 水平版 */}
+        <div className="mt-8 p-4 bg-white/5 border border-white/10 rounded-xl max-w-4xl mx-auto mb-12">
+          <h3 className="text-xl font-semibold mb-4 shine-text text-center">
+            AI 增强设置
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="col-span-1 md:col-span-3">
+              <div className="flex items-center gap-4 flex-wrap justify-center mb-6">
+                <button 
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all ${
+                    mode === '4k' 
+                      ? 'bg-[#4f46e5] text-white' 
+                      : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                  }`}
+                  onClick={() => {
+                    // 保存当前处理后的图片
+                    if (processedImage) {
+                      setProcessedImages(prev => ({
+                        ...prev,
+                        [mode]: processedImage
+                      }));
+                    }
+                    
+                    // 切换模式
+                    setMode('4k');
+                    
+                    // 显示该模式下已有的处理结果
+                    const processed4kImage = processedImages['4k'];
+                    setProcessedImage(processed4kImage);
+                    
+                    // 如果此模式下没有处理过，显示提示
+                    if (!processed4kImage && uploadedImage) {
+                      setModeChanged(true);
+                      toast({
+                        title: "模式已切换",
+                        description: "已切换至4K蓝光模式，请点击处理按钮",
+                      });
+                    }
+                  }}
+                >
+                  {mode === '4k' ? (
+                    <img src="https://pic1.imgdb.cn/item/67dcfbc988c538a9b5c29517.png" alt="4K蓝光" className="w-5 h-5" />
+                  ) : (
+                    <ZapIcon className="w-5 h-5" />
+                  )}
+                  <span>图片一键4k质量</span>
+                </button>
+                
+                <button 
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all ${
+                    mode === 'wechat' 
+                      ? 'bg-[#4f46e5] text-white' 
+                      : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                  }`}
+                  onClick={() => {
+                    // 保存当前处理后的图片
+                    if (processedImage) {
+                      setProcessedImages(prev => ({
+                        ...prev,
+                        [mode]: processedImage
+                      }));
+                    }
+                    
+                    // 切换模式
+                    setMode('wechat');
+                    
+                    // 显示该模式下已有的处理结果
+                    const processedWechatImage = processedImages['wechat'];
+                    setProcessedImage(processedWechatImage);
+                    
+                    // 如果此模式下没有处理过，显示提示
+                    if (!processedWechatImage && uploadedImage) {
+                      setModeChanged(true);
+                      toast({
+                        title: "模式已切换",
+                        description: "已切换至朋友圈超清模式，请点击处理按钮",
+                      });
+                    }
+                  }}
+                >
+                  {mode === 'wechat' ? (
+                    <img src="https://pic1.imgdb.cn/item/67dcfbc988c538a9b5c29517.png" alt="朋友圈" className="w-5 h-5" />
+                  ) : (
+                    <MessageCircle className="w-5 h-5" />
+                  )}
+                  <span>朋友圈超清</span>
+                </button>
+                
+                <button 
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all ${
+                    mode === 'xiaohongshu' 
+                      ? 'bg-[#4f46e5] text-white' 
+                      : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                  }`}
+                  onClick={() => {
+                    // 保存当前处理后的图片
+                    if (processedImage) {
+                      setProcessedImages(prev => ({
+                        ...prev,
+                        [mode]: processedImage
+                      }));
+                    }
+                    
+                    // 切换模式
+                    setMode('xiaohongshu');
+                    
+                    // 显示该模式下已有的处理结果
+                    const processedXiaohongshuImage = processedImages['xiaohongshu'];
+                    setProcessedImage(processedXiaohongshuImage);
+                    
+                    // 如果此模式下没有处理过，显示提示
+                    if (!processedXiaohongshuImage && uploadedImage) {
+                      setModeChanged(true);
+                      toast({
+                        title: "模式已切换",
+                        description: "已切换至小红书封面模式，请点击处理按钮",
+                      });
+                    }
+                  }}
+                >
+                  <div className="w-5 h-5 relative flex items-center justify-center">
+                    {mode === 'xiaohongshu' ? (
+                      <img src="https://pic1.imgdb.cn/item/67dcfbaf88c538a9b5c294b3.png" alt="小红书" className="w-full h-full" />
+                    ) : (
+                      <BookOpen className="w-5 h-5" />
+                    )}
+                  </div>
+                  <span>小红书封面</span>
+                </button>
+              </div>
+            </div>
+            
+            <div className="md:col-span-2 border-r border-white/10 pr-4">
+              <p className="text-sm text-gray-300 max-w-2xl">
+                {mode === 'wechat'
+                  ? '朋友圈模式：短边1080px，长边等比例缩放，确保图片在朋友圈显示清晰不被压缩'
+                  : mode === 'xiaohongshu'
+                  ? '小红书模式：3:4比例，1280*1706像素，确保在小红书上获得最佳展示效果不被压缩'
+                  : '4K蓝光模式：提升至4K级别，应用蓝光级别的细节和色彩增强，处理后可以选择朋友圈防压缩和小红书防压缩再处理一遍哦（在线处理，根据您的网速，大约需要10-30秒）'}
+              </p>
+            </div>
+            
+            <div className="md:col-span-1">
+              <div className="flex flex-col gap-3">
+                <div className="mb-2">
+                  <label className="text-xs text-gray-300 mb-1 block">
+                    处理进度
+                  </label>
+                  <Progress value={progress} className="w-full h-2 rounded-full progress-bar">
+                    <div 
+                      className="h-full progress-fill rounded-full transition-all duration-300" 
+                      style={{ width: `${progress}%` }} 
+                    />
+                  </Progress>
+                  {progress > 0 && (
+                    <p className="text-right text-xs text-gray-400 mt-1">{Math.round(progress)}%</p>
+                  )}
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    className={`flex-1 py-1 px-2 text-sm button-primary rounded-lg ${(!uploadedImage || isProcessing) ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    disabled={!uploadedImage || isProcessing}
+                    onClick={processImage}
+                  >
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    {isProcessing ? '处理中' : '处理'}
+                  </Button>
+                  
+                  <Button 
+                    className={`flex-1 py-1 px-2 text-sm bg-white/10 hover:bg-white/20 text-white border-0 rounded-lg ${!processedImage ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    disabled={!processedImage}
+                    onClick={downloadImage}
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    下载
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="mb-24">
+          <Card className="p-8 hero-card mx-auto" style={{ width: "1000px" }}>
+            <div 
+              className={`upload-zone rounded-xl p-6 flex flex-col items-center justify-center h-[700px] relative group ${
+                isDragging ? 'dragging' : ''
+              }`}
+              onDragEnter={handleDragOver}
+              onDragOver={handleDragOver}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                accept="image/jpeg,image/png"
+                onChange={handleFileChange}
+                style={{ display: uploadedImage ? 'none' : 'block' }}
+              />
+              
+              {uploadedImage ? (
+                <div className="w-full h-full flex flex-col items-center justify-center relative">
+                  <div className="absolute top-2 right-2 z-20">
+                    <button
+                      className="bg-black/50 hover:bg-black/70 rounded-full p-1 transition-colors"
+                      onClick={removeUploadedImage}
+                    >
+                      <X className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                  
+                  {/* 分屏对比显示 - 仅在4K模式且有处理后图片时显示 */}
+                  {mode === '4k' && processedImage ? (
+                    <div className="relative w-full h-[650px] overflow-hidden rounded-lg mb-4" ref={imageContainerRef}>
+
+                      
+                      {/* 删除按钮 */}
+                      <div className="absolute top-2 right-2 z-20">
+                        <button
+                          className="bg-black/50 hover:bg-black/70 rounded-full p-1 transition-colors"
+                          onClick={removeUploadedImage}
+                        >
+                          <X className="w-5 h-5 text-white" />
+                        </button>
+                      </div>
+                      
+                      {/* 全屏按钮 */}
+                      <div className="absolute bottom-2 right-2 z-20">
+                        <button
+                          className="bg-black/50 hover:bg-black/70 rounded-full p-1.5 transition-colors"
+                          onClick={toggleFullscreen}
+                        >
+                          <MaximizeIcon className="w-5 h-5 text-white" />
+                        </button>
+                      </div>
+                      
+                      <div className="flex h-full relative">
+                        <div className="w-1/2 relative border-r border-white/30">
+                          <div className="absolute top-2 left-2 z-10 bg-white/80 text-gray-900 text-xs font-medium px-2 py-1 rounded-full">
+                            原图
+                          </div>
+                          <div className="absolute top-2 right-2 z-10 bg-white/30 text-white text-xs font-medium px-2 py-1 rounded-full">
+                            {imageDimensions.width > 0 && `${Math.round(imageDimensions.width)} × ${Math.round(imageDimensions.height)} px`}
+                          </div>
+                          <img 
+                            src={uploadedImage} 
+                            alt="原始图片"
+                            className="w-full h-full object-contain"
+                          />
+                          <div className="absolute inset-0 pointer-events-none border-r-0 border border-white/10"></div>
+                        </div>
+                        <div className="w-1/2 relative">
+                          <div className="absolute top-2 left-2 z-10 bg-[#34d399]/80 text-white text-xs font-medium px-2 py-1 rounded-full">
+                            4K增强
+                          </div>
+                          <div className="absolute top-2 right-2 z-10 bg-white/30 text-white text-xs font-medium px-2 py-1 rounded-full">
+                            {processedDimensions['4k'].width > 0 ? 
+                              `${Math.round(processedDimensions['4k'].width)} × ${Math.round(processedDimensions['4k'].height)} px` : 
+                              '4K超清分辨率'}
+                          </div>
+                          <img 
+                            src={processedImage} 
+                            alt="4K处理后的图片"
+                            className="w-full h-full object-contain"
+                          />
+                          <div className="absolute inset-0 pointer-events-none border-l-0 border border-white/10"></div>
+                        </div>
+                        
+                        {/* 中央分隔线 */}
+                        <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-[#34d399]/70 transform -translate-x-1/2 z-10">
+                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#34d399] flex items-center justify-center shadow-lg">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M12 22V2M2 12H22" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+                    </div>
+                  ) : (
+                    <div className="relative w-full h-[650px] overflow-hidden rounded-lg mb-4" ref={imageContainerRef}>
+                      <img 
+                        src={processedImage || uploadedImage} 
+                        alt={processedImage ? "处理后的图片" : "上传的图片"}
+                        className="w-full h-full object-contain"
+                      />
+                      {processedImage && (
+                        <div className={`absolute top-2 left-2 ${mode === 'wechat' ? 'bg-green-500/80' : mode === 'xiaohongshu' ? 'bg-[#ff2e51]/80' : 'bg-[#34d399]/80'} text-white text-xs font-medium px-2 py-1 rounded-full`}>
+                          {mode === 'wechat' ? '朋友圈已优化' : mode === 'xiaohongshu' ? '小红书已优化' : '4K蓝光已增强'}
+                        </div>
+                      )}
+                      {mode === 'xiaohongshu' && processedImage && (
+                        <div className="absolute bottom-2 right-2 bg-black/50 rounded-md p-1">
+                          <img src="https://pic1.imgdb.cn/item/67dcfbaf88c538a9b5c294b3.png" alt="小红书" className="w-6 h-6" />
+                        </div>
+                      )}
+                      
+                      {/* 全屏按钮 */}
+                      <div className="absolute bottom-2 right-2 z-20">
+                        <button
+                          className="bg-black/50 hover:bg-black/70 rounded-full p-1.5 transition-colors"
+                          onClick={toggleFullscreen}
+                        >
+                          <MaximizeIcon className="w-5 h-5 text-white" />
+                        </button>
+                      </div>
+                      
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    </div>
+                  )}
+                  
+                  <p className="text-white text-sm">
+                    {processedImage 
+                      ? `处理完成，可以下载${mode === 'wechat' ? '或分享到朋友圈' : mode === 'xiaohongshu' ? '或上传到小红书' : '您的4K蓝光增强图'}` 
+                      : modeChanged 
+                      ? `模式已切换为${mode === 'wechat' ? '朋友圈超清' : mode === 'xiaohongshu' ? '小红书封面' : '4K蓝光增强'}，点击处理按钮重新优化` 
+                      : "已上传图片，点击处理按钮开始优化"}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-[#4f46e5] rounded-full blur-2xl opacity-20 animate-pulse" />
+                    <ImagePlus 
+                      className={`w-16 h-16 mb-6 transition-all duration-300 ${
+                        isDragging ? 'text-[#ec4899] scale-110' : 'text-gray-400'
+                      }`} 
+                    />
+                  </div>
+                  <p className={`text-xl font-medium transition-all duration-300 ${
+                    isDragging ? 'text-[#ec4899]' : 'text-gray-300'
+                  }`}>
+                    拖入图片或点击上传
+                  </p>
+                  <p className="text-sm text-gray-400 mt-3">支持 JPG、PNG 等图片格式</p>
+                  {mode === 'xiaohongshu' && (
+                    <div className="mt-4 flex items-center bg-[#ff2e51]/10 rounded-full px-3 py-1">
+                      <img src="https://pic1.imgdb.cn/item/67dcfbaf88c538a9b5c294b3.png" alt="小红书" className="w-4 h-4 mr-2" />
+                      <span className="text-xs text-[#ff2e51]">小红书最佳封面模式已开启</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {/* Case Study Section */}
+        <div className="mb-24">
+          <h2 className="text-3xl font-bold text-center mb-10 shine-text">使用案例</h2>
+          <div className="mx-auto max-w-xl rounded-xl overflow-hidden shadow-[0_0_30px_rgba(236,72,153,0.2)]">
+            <img 
+              src="https://tuchuang.org.cn/imgs/2025/03/22/89879711d95bbc5d.jpg" 
+              alt="朋友圈图片优化案例" 
+              className="w-full object-cover"
+            />
+            <div className="p-4 bg-gradient-to-r from-[#4f46e5]/20 to-[#ec4899]/20 backdrop-blur-md">
+              <p className="text-center text-white text-sm md:text-base">超清处理效果展示 - 告别压缩失真，呈现原始画质</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Features Section */}
+        <div className="mb-24">
+          <h2 className="text-3xl font-bold text-center mb-12 shine-text">主要功能</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                title: "AI 智能图像增强",
+                description: "使用CodeFormer AI技术自动识别场景，优化细节和色彩，修复模糊和噪点，让照片更加清晰锐利",
+                icon: Wand2,
+              },
+              {
+                title: "多平台图片优化",
+                description: "支持朋友圈超清图片、小红书高清封面和4K蓝光增强，满足各类社交媒体的图片需求",
+                icon: ImagePlus,
+              },
+              {
+                title: "人脸智能修复",
+                description: "CodeFormer AI模型能精准识别人脸细节，修复失真和模糊，让人像更加自然清晰",
+                icon: Share2,
+              },
+            ].map((feature, index) => (
+              <Card 
+                key={index} 
+                className="p-6 feature-card"
+              >
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 bg-[#4f46e5] rounded-full blur-xl opacity-20" />
+                  <feature.icon className="w-10 h-10 text-[#ec4899] relative z-10" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3 shine-text">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-300 leading-relaxed">{feature.description}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Testimonials Section */}
+        <div className="mb-24">
+          <h2 className="text-3xl font-bold text-center mb-12 shine-text">用户评价</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {testimonials.map((testimonial, index) => (
+              <Card key={index} className="hero-card p-6">
+                <div className="flex items-center mb-4">
+                  <img 
+                    src={testimonial.avatar} 
+                    alt={testimonial.name}
+                    className="w-12 h-12 rounded-full object-cover mr-4"
+                  />
+                  <div>
+                    <h4 className="font-medium text-white">{testimonial.name}</h4>
+                    <div className="flex">
+                      {Array(testimonial.rating).fill(0).map((_, i) => (
+                        <Star key={i} className="w-4 h-4 text-amber-400 fill-current" />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <p className="text-gray-300">{testimonial.comment}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mb-24">
+          <h2 className="text-3xl font-bold text-center mb-12 shine-text">常见问题</h2>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {faqs.map((faq, index) => (
+              <Card 
+                key={index} 
+                className="faq-card p-6 cursor-pointer"
+                onClick={() => setOpenFaq(openFaq === index ? null : index)}
+              >
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium text-white">{faq.question}</h3>
+                  <ChevronDown 
+                    className={`w-5 h-5 text-gray-400 transition-transform ${
+                      openFaq === index ? 'rotate-180' : ''
+                    }`} 
+                  />
+                </div>
+                {openFaq === index && (
+                  <p className="mt-4 text-gray-300">{faq.answer}</p>
+                )}
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA Section */}
+        <div className="text-center">
+          <div className="flex justify-center items-center gap-4 mb-8">
+            <CheckCircle2 className="w-6 h-6 text-[#ec4899]" />
+            <span className="text-gray-300">已有超过 3000+ 用户选择使用</span>
+          </div>
+          <Button className="button-primary rounded-full px-8 py-6 text-lg">
+            <MessageCircle className="w-5 h-5 mr-2" />
+            立即体验
+          </Button>
+        </div>
+      </div>
+    </main>
+  );
+}                                             
