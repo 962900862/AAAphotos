@@ -14,6 +14,19 @@ export const maxDuration = 60;
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// CORS配置助手函数
+function setCorsHeaders(response: NextResponse) {
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  return response;
+}
+
+// 处理OPTIONS请求（预检请求）
+export async function OPTIONS() {
+  return setCorsHeaders(NextResponse.json({}, { status: 200 }));
+}
+
 // 定义图像URL类型
 interface ImageUrl {
   type: string;
@@ -36,10 +49,11 @@ export async function POST(request: NextRequest) {
   const timeoutPromise = new Promise<NextResponse>((resolve) => {
     timeoutId = setTimeout(() => {
       console.log("⚠️ 处理即将超时，提前返回结果");
-      resolve(NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: "处理时间超过限制，请尝试上传更小的图片或降低质量设置"
-      }, { status: 408 }));
+      }, { status: 408 });
+      resolve(setCorsHeaders(response));
     }, 55000); // 设置为55秒，留5秒缓冲时间
   });
 
@@ -56,7 +70,7 @@ export async function POST(request: NextRequest) {
     if (!imageFile) {
       console.error('❌ 未找到图片文件');
       clearTimeout(timeoutId!);
-      return NextResponse.json({ error: '未找到图片文件' }, { status: 400 });
+      return setCorsHeaders(NextResponse.json({ error: '未找到图片文件' }, { status: 400 }));
     }
     
     console.log(`📁 收到图片: ${imageFile.name}, 大小: ${(imageFile.size / 1024).toFixed(2)}KB, 类型: ${imageFile.type}`);
@@ -176,22 +190,22 @@ export async function POST(request: NextRequest) {
             // 4. 返回处理结果
             console.log(`\n✅ 图像处理成功! 最终URL: ${jsonResult.imageUrl}\n`);
             clearTimeout(timeoutId!);
-            return NextResponse.json({
+            return setCorsHeaders(NextResponse.json({
               success: true,
               imageUrl: jsonResult.imageUrl,
-            });
+            }));
           } else if (jsonResult) {
             console.error(`\n❌ 处理失败: ${jsonResult.error || '未知错误'}\n`);
             clearTimeout(timeoutId!);
-            return NextResponse.json({ 
+            return setCorsHeaders(NextResponse.json({ 
               error: jsonResult.error || '处理图片失败' 
-            }, { status: 500 });
+            }, { status: 500 }));
           } else {
             console.error('\n❌ 未能从Python输出中提取有效的JSON结果');
             clearTimeout(timeoutId!);
-            return NextResponse.json({ 
+            return setCorsHeaders(NextResponse.json({ 
               error: '未能从Python输出中提取有效的JSON结果' 
-            }, { status: 500 });
+            }, { status: 500 }));
           }
         } catch (parseError) {
           console.error('\n❌ 解析Python输出失败:');
@@ -199,24 +213,24 @@ export async function POST(request: NextRequest) {
           console.error('\nPython脚本输出内容:');
           console.error(stdout);
           clearTimeout(timeoutId!);
-          return NextResponse.json({ 
+          return setCorsHeaders(NextResponse.json({ 
             error: '解析处理结果失败' 
-          }, { status: 500 });
+          }, { status: 500 }));
         }
       } else {
         console.error('\n❌ Python脚本没有输出');
         clearTimeout(timeoutId!);
-        return NextResponse.json({ 
+        return setCorsHeaders(NextResponse.json({ 
           error: 'Python脚本没有输出' 
-        }, { status: 500 });
+        }, { status: 500 }));
       }
     } catch (pythonError) {
       console.error('\n❌ 执行Python脚本出错:');
       console.error(pythonError);
       clearTimeout(timeoutId!);
-      return NextResponse.json({ 
+      return setCorsHeaders(NextResponse.json({ 
         error: '执行Python脚本时出错，请确保已安装Python及必要的依赖包' 
-      }, { status: 500 });
+      }, { status: 500 }));
     }
   } catch (error) {
     // 清除超时定时器
@@ -224,9 +238,9 @@ export async function POST(request: NextRequest) {
     
     console.error('\n❌ 处理图片时出错:');
     console.error(error);
-    return NextResponse.json({ 
+    return setCorsHeaders(NextResponse.json({ 
       error: '处理图片过程中出错，请稍后重试' 
-    }, { status: 500 });
+    }, { status: 500 }));
   } finally {
     // 清理临时文件
     if (tempFilePath) {

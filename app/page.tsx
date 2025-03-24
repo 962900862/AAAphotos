@@ -225,9 +225,11 @@ export default function Home() {
           formData.append('image', blob, 'image.jpg');
           
           // 发送请求到API
-          const apiResponse = await fetch('https://aa-aphotos.vercel.app/api/enhance', {
+          const apiResponse = await fetch('/api/enhance', {
             method: 'POST',
             body: formData,
+            mode: 'cors',
+            credentials: 'omit',
           });
           
           if (!apiResponse.ok) {
@@ -726,9 +728,9 @@ export default function Home() {
 
         {/* Main Content */}
         <div className="mb-24">
-          <Card className="p-8 hero-card mx-auto" style={{ width: "1000px" }}>
+          <Card className="p-4 md:p-8 hero-card mx-auto max-w-full md:w-[1000px]">
             <div 
-              className={`upload-zone rounded-xl p-6 flex flex-col items-center justify-center h-[700px] relative group ${
+              className={`upload-zone rounded-xl p-3 md:p-6 flex flex-col items-center justify-center h-[400px] md:h-[700px] relative group ${
                 isDragging ? 'dragging' : ''
               }`}
               onDragEnter={handleDragOver}
@@ -758,7 +760,7 @@ export default function Home() {
                   
                   {/* 分屏对比显示 - 仅在4K模式且有处理后图片时显示 */}
                   {mode === '4k' && processedImage ? (
-                    <div className="relative w-full h-[650px] overflow-hidden rounded-lg mb-4" ref={imageContainerRef}>
+                    <div className="relative w-full h-[300px] md:h-[650px] overflow-hidden rounded-lg mb-4" ref={imageContainerRef}>
 
                       
                       {/* 删除按钮 */}
@@ -786,7 +788,7 @@ export default function Home() {
                           <div className="absolute top-2 left-2 z-10 bg-white/80 text-gray-900 text-xs font-medium px-2 py-1 rounded-full">
                             原图
                           </div>
-                          <div className="absolute top-2 right-2 z-10 bg-white/30 text-white text-xs font-medium px-2 py-1 rounded-full">
+                          <div className="absolute top-2 right-2 z-10 bg-white/30 text-white text-xs font-medium px-2 py-1 rounded-full hidden md:block">
                             {imageDimensions.width > 0 && `${Math.round(imageDimensions.width)} × ${Math.round(imageDimensions.height)} px`}
                           </div>
                           <img 
@@ -800,7 +802,7 @@ export default function Home() {
                           <div className="absolute top-2 left-2 z-10 bg-[#34d399]/80 text-white text-xs font-medium px-2 py-1 rounded-full">
                             4K增强
                           </div>
-                          <div className="absolute top-2 right-2 z-10 bg-white/30 text-white text-xs font-medium px-2 py-1 rounded-full">
+                          <div className="absolute top-2 right-2 z-10 bg-white/30 text-white text-xs font-medium px-2 py-1 rounded-full hidden md:block">
                             {processedDimensions['4k'].width > 0 ? 
                               `${Math.round(processedDimensions['4k'].width)} × ${Math.round(processedDimensions['4k'].height)} px` : 
                               '4K超清分辨率'}
@@ -826,7 +828,7 @@ export default function Home() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
                     </div>
                   ) : (
-                    <div className="relative w-full h-[650px] overflow-hidden rounded-lg mb-4" ref={imageContainerRef}>
+                    <div className="relative w-full h-[300px] md:h-[650px] overflow-hidden rounded-lg mb-4" ref={imageContainerRef}>
                       <img 
                         src={processedImage || uploadedImage} 
                         alt={processedImage ? "处理后的图片" : "上传的图片"}
@@ -870,21 +872,21 @@ export default function Home() {
                   <div className="relative">
                     <div className="absolute inset-0 bg-[#4f46e5] rounded-full blur-2xl opacity-20 animate-pulse" />
                     <ImagePlus 
-                      className={`w-16 h-16 mb-6 transition-all duration-300 ${
+                      className={`w-10 h-10 md:w-16 md:h-16 mb-4 md:mb-6 transition-all duration-300 ${
                         isDragging ? 'text-[#ec4899] scale-110' : 'text-gray-400'
                       }`} 
                     />
                   </div>
-                  <p className={`text-xl font-medium transition-all duration-300 ${
+                  <p className={`text-lg md:text-xl font-medium transition-all duration-300 ${
                     isDragging ? 'text-[#ec4899]' : 'text-gray-300'
                   }`}>
                     拖入图片或点击上传
                   </p>
-                  <p className="text-sm text-gray-400 mt-3">支持 JPG、PNG 等图片格式</p>
+                  <p className="text-xs md:text-sm text-gray-400 mt-2 md:mt-3">支持 JPG、PNG 等图片格式</p>
                   {mode === 'xiaohongshu' && (
-                    <div className="mt-4 flex items-center bg-[#ff2e51]/10 rounded-full px-3 py-1">
-                      <img src="https://pic1.imgdb.cn/item/67dcfbaf88c538a9b5c294b3.png" alt="小红书" className="w-4 h-4 mr-2" />
-                      <span className="text-xs text-[#ff2e51]">小红书最佳封面模式已开启</span>
+                    <div className="mt-3 md:mt-4 flex items-center bg-[#ff2e51]/10 rounded-full px-2 md:px-3 py-1">
+                      <img src="https://pic1.imgdb.cn/item/67dcfbaf88c538a9b5c294b3.png" alt="小红书" className="w-4 h-4 mr-1 md:mr-2" />
+                      <span className="text-[10px] md:text-xs text-[#ff2e51]">小红书最佳封面模式已开启</span>
                     </div>
                   )}
                 </>
