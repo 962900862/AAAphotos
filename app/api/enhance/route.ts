@@ -253,21 +253,53 @@ export async function POST(request: NextRequest) {
       console.log(`📸 【提取到的URL】: ${processedImageUrl}`);
       console.log('======================================\n');
       
-      // 直接使用CodeFormer返回的URL作为最终URL
-      const finalImageUrl = processedImageUrl;
+      // 从CodeFormer获取处理后的图像内容
+      console.log(`\n🔄 从CodeFormer下载处理后的图像...`);
+      console.log(`⏱️ [${new Date().toISOString()}] 开始下载处理后的图像`);
+      const imageResponse = await fetch(processedImageUrl);
+      console.log(`⏱️ [${new Date().toISOString()}] 下载响应接收完成`);
+      
+      if (!imageResponse.ok) {
+        console.error(`❌ 下载处理后的图像失败: HTTP ${imageResponse.status}`);
+        console.error(`📝 响应状态: ${imageResponse.statusText}`);
+        clearTimeout(timeoutId!);
+        // 如果下载失败，返回原始图床URL
+        return setCorsHeaders(NextResponse.json({ 
+          success: true,
+          imageUrl: uploadedImageUrl,
+          message: '处理后图像下载失败，返回原图URL'
+        }, { status: 200 }));
+      }
+      
+      // 获取图像Blob
+      console.log('🔄 将图像响应转换为Blob...');
+      const processedImageBlob = await imageResponse.blob();
+      console.log(`✅ 下载处理后的图像成功, 大小: ${(processedImageBlob.size / 1024).toFixed(2)}KB`);
+      
+      // 上传AI处理后的图像到360图床
+      console.log(`\n🔄 开始上传AI处理后的图像到360图床...`);
+      const processedUploadedUrl = await uploadTo360ImageBed(processedImageBlob);
+      
+      // 如果AI处理后的图片上传失败，使用原图URL
+      const finalImageUrl = processedUploadedUrl || uploadedImageUrl;
       
       // 高亮打印最终使用的URL
       console.log('\n========================================');
       console.log(`📸 【最终使用的URL】: ${finalImageUrl}`);
       console.log('========================================\n');
       
-      console.log(`\n✅ [${new Date().toISOString()}] 处理完成，返回CodeFormer URL: ${finalImageUrl}`);
+      // 添加是否使用原图的提示信息
+      const message = processedUploadedUrl ? 
+        'AI处理成功' : 
+        'AI处理后图像上传失败，返回原图URL';
+      
+      console.log(`\n✅ [${new Date().toISOString()}] 处理完成，返回最终URL: ${finalImageUrl}`);
       
       // 格式化返回结果，确保字段名称正确
       const resultJson = {
         success: true,
         imageUrl: finalImageUrl,
-        message: 'AI处理成功'
+        message: message
       };
       
       // 打印最终返回的JSON
