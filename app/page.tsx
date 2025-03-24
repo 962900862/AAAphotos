@@ -224,12 +224,20 @@ export default function Home() {
           const formData = new FormData();
           formData.append('image', blob, 'image.jpg');
           
-          // 发送请求到API
+          // 添加调试日志
+          console.log('准备向API发送请求:', {
+            url: '/api/enhance',
+            blobSize: blob.size,
+            currentHost: window.location.origin
+          });
+          
+          // 发送请求到API - 使用相对路径和适当的凭据设置
           const apiResponse = await fetch('/api/enhance', {
             method: 'POST',
             body: formData,
-            mode: 'cors',
-            credentials: 'omit',
+            // 移除可能导致问题的CORS设置
+            // mode: 'cors',
+            // credentials: 'omit',
           });
           
           if (!apiResponse.ok) {
