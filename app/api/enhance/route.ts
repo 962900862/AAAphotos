@@ -96,12 +96,14 @@ async function uploadTo360ImageBed(imageBlob: Blob): Promise<string | null> {
  * 图像增强API处理函数 - 使用JavaScript直接调用CodeFormer
  */
 export async function POST(request: NextRequest) {
-  console.log(`\n\n=== 🚀 [${new Date().toISOString()}] API请求开始处理 ===\n\n`);
+  console.log(`\n\n=====================================================`);
+  console.log(`🚀 API请求开始 - ${new Date().toISOString()}`);
+  console.log(`=====================================================\n\n`);
   
   let timeoutId: NodeJS.Timeout | undefined = undefined;
   const timeoutPromise = new Promise<NextResponse>((resolve) => {
     timeoutId = setTimeout(() => {
-      console.log("⚠️ 处理即将超时，提前返回结果");
+      console.log("\n⚠️⚠️⚠️ 处理即将超时，提前返回结果 ⚠️⚠️⚠️");
       const response = NextResponse.json({
         success: false,
         error: "处理时间超过限制，请尝试上传更小的图片"
@@ -156,6 +158,13 @@ export async function POST(request: NextRequest) {
       console.log(`⏱️ [${new Date().toISOString()}] 开始AI处理`);
       
       // 直接调用CodeFormer模型API
+      console.log(`\n▶ 发送参数到CodeFormer:`);
+      console.log(`  - face_align: true`);
+      console.log(`  - background_enhance: true`);
+      console.log(`  - face_upsample: true`);
+      console.log(`  - upscale: 2`);
+      console.log(`  - codeformer_fidelity: 0.7\n`);
+      
       const result = await app.predict("/predict", [
         imageBlob,          // 图像
         true,               // face_align
@@ -165,28 +174,113 @@ export async function POST(request: NextRequest) {
         0.7,                // codeformer_fidelity
       ]);
       
-      console.log(`✅ [${new Date().toISOString()}] 图像处理完成`);
+      console.log(`\n✅✅✅ 图像处理完成 - ${new Date().toISOString()} ✅✅✅\n`);
       
       // 检查API返回的结果
-      console.log('🔍 检查API返回结果');
-      console.log('📊 Result数据:', JSON.stringify(result, null, 2));
+      console.log('\n🔍 API返回结果详情:');
+      console.log('==============================================');
+      
+      // 格式化打印整个结果
+      console.log(JSON.stringify(result, null, 2));
+      
+      console.log('==============================================\n');
       
       if (!result || !result.data || !Array.isArray(result.data) || result.data.length === 0) {
-        console.error('❌ API返回结果无效');
+        console.error('\n❌❌❌ API返回结果无效 ❌❌❌');
         clearTimeout(timeoutId!);
         return setCorsHeaders(NextResponse.json({ 
+          success: false,
           error: '处理图片失败，API返回结果无效' 
         }, { status: 500 }));
       }
       
-      // 正确提取图像URL
-      const processedImageData = result.data[0];
-      // 检查返回的数据是对象还是字符串
-      const processedImageUrl = typeof processedImageData === 'object' && processedImageData.url 
-        ? processedImageData.url  // 如果是对象，获取url属性
-        : processedImageData;     // 如果是字符串，直接使用
-
-      console.log(`🌟 获取到处理后的图像URL: ${processedImageUrl}`);
+      // 详细记录返回数据的结构
+      console.log('\n🔍 分析返回数据结构:');
+      console.log(`- 数据类型: ${typeof result.data}`);
+      console.log(`- 是否为数组: ${Array.isArray(result.data)}`);
+      console.log(`- 数组长度: ${result.data.length}`);
+      
+      // 循环显示所有数组项
+      console.log('\n🔍 数组内容详情:');
+      for (let i = 0; i < result.data.length; i++) {
+        console.log(`\n🔍 [${i}] 项数据:`);
+        console.log(`- 类型: ${typeof result.data[i]}`);
+        if (typeof result.data[i] === 'object' && result.data[i] !== null) {
+          console.log('- 属性列表:');
+          const item = result.data[i] as any;
+          Object.keys(item).forEach(key => {
+            console.log(`  • ${key}: ${typeof item[key]}`);
+            if (key === 'url' || key === 'path') {
+              console.log(`    值: ${item[key]}`);
+            }
+          });
+        } else {
+          console.log(`- 值: ${result.data[i]}`);
+        }
+      }
+      console.log('');
+      
+      // 直接从result.data[1]获取URL，这是CodeFormer新版API的输出格式
+      console.log('\n🔎 直接从result.data[1]获取URL...');
+      
+      // 确保数组长度足够且第二个元素存在
+      if (!result.data || result.data.length < 2 || !result.data[1]) {
+        console.error('❌ API返回的结果中没有result.data[1]');
+        console.error('📊 数据结构:', JSON.stringify(result.data, null, 2));
+        clearTimeout(timeoutId!);
+        return setCorsHeaders(NextResponse.json({ 
+          success: false,
+          error: '处理图片失败，API返回结果格式异常' 
+        }, { status: 500 }));
+      }
+      
+      // 获取result.data[1]的类型和值
+      console.log(`\n📊 result.data[1]的类型: ${typeof result.data[1]}`);
+      console.log(`📊 result.data[1]的值: ${JSON.stringify(result.data[1], null, 2)}`);
+      
+      // 直接使用result.data[1]，不管它是字符串还是对象
+      let processedImageUrl = '';
+      const resultItem = result.data[1] as any;
+      
+      if (typeof resultItem === 'string') {
+        // 如果是字符串，直接使用
+        processedImageUrl = resultItem;
+        console.log(`🔎 将字符串值作为URL: ${processedImageUrl}`);
+      } else if (typeof resultItem === 'object' && resultItem !== null) {
+        // 如果是对象，检查url属性
+        if (resultItem.url) {
+          processedImageUrl = resultItem.url;
+          console.log(`🔎 使用对象的url属性: ${processedImageUrl}`);
+        } else if (resultItem.path) {
+          // 如果没有url但有path
+          const path = resultItem.path;
+          processedImageUrl = `https://sczhou-codeformer.hf.space/file=${path}`;
+          console.log(`🔎 从path构建URL: ${processedImageUrl}`);
+        } else {
+          // 对象中没有找到url或path
+          console.error('❌ result.data[1]是对象，但没有url或path属性');
+          console.error('📊 对象内容:', JSON.stringify(resultItem, null, 2));
+          clearTimeout(timeoutId!);
+          return setCorsHeaders(NextResponse.json({ 
+            success: false,
+            error: '处理图片失败，无法从结果中提取URL' 
+          }, { status: 500 }));
+        }
+      } else {
+        // 既不是字符串也不是对象
+        console.error(`❌ result.data[1]既不是字符串也不是对象，无法提取URL`);
+        console.error(`📊 值的类型: ${typeof resultItem}, 值: ${JSON.stringify(resultItem, null, 2)}`);
+        clearTimeout(timeoutId!);
+        return setCorsHeaders(NextResponse.json({ 
+          success: false,
+          error: '处理图片失败，结果格式异常' 
+        }, { status: 500 }));
+      }
+      
+      // 高亮打印从result.data[1]提取的URL
+      console.log('\n======================================');
+      console.log(`📸 【从result.data[1]提取的URL】: ${processedImageUrl}`);
+      console.log('======================================\n');
       
       // 从CodeFormer获取处理后的图像内容
       console.log(`\n🔄 从CodeFormer下载处理后的图像...`);
@@ -228,15 +322,32 @@ export async function POST(request: NextRequest) {
       // 如果上传到360图床成功，返回图床URL，否则返回CodeFormer URL
       const finalImageUrl = uploadedUrl || processedImageUrl;
       
-      console.log(`\n✅ [${new Date().toISOString()}] 处理完成，返回最终URL: ${finalImageUrl}`);
-      console.log(`\n\n=== 🏁 [${new Date().toISOString()}] API请求处理结束 ===\n\n`);
+      // 高亮打印最终使用的URL
+      console.log('\n========================================');
+      console.log(`📸 【最终使用的URL】: ${finalImageUrl}`);
+      console.log('========================================\n');
       
-      return setCorsHeaders(NextResponse.json({
+      console.log(`\n✅ [${new Date().toISOString()}] 处理完成，返回最终URL: ${finalImageUrl}`);
+      
+      // 格式化返回结果，确保字段名称正确
+      const resultJson = {
         success: true,
-        imageUrl: finalImageUrl,
-        isPermanent: !!uploadedUrl,
-        originalImageUrl: directUploadUrl || null
-      }));
+        imageUrl: finalImageUrl
+      };
+      
+      // 打印最终返回的JSON
+      console.log('\n=============================================');
+      console.log('📊 【API最终返回数据】');
+      console.log('=============================================');
+      console.log(JSON.stringify(resultJson, null, 2));
+      console.log('=============================================\n');
+      
+      console.log(`\n\n=============================================`);
+      console.log(`🏁 API请求处理结束 - ${new Date().toISOString()}`);
+      console.log(`=============================================\n\n`);
+      
+      // 极度简化返回数据，只返回图片URL和状态
+      return setCorsHeaders(NextResponse.json(resultJson));
     } catch (apiError: any) {
       console.error(`❌ [${new Date().toISOString()}] 调用CodeFormer API失败:`, apiError);
       console.error('📝 错误详情:', apiError.message);
@@ -246,16 +357,14 @@ export async function POST(request: NextRequest) {
         console.log('⚠️ 由于AI处理失败，返回原图URL');
         clearTimeout(timeoutId!);
         return setCorsHeaders(NextResponse.json({ 
-              success: true,
-          imageUrl: directUploadUrl,
-          isPermanent: true,
-          isOriginal: true,
-          error: `AI处理失败: ${apiError.message || '未知错误'}`
+          success: true,
+          imageUrl: directUploadUrl
         }));
       }
       
       clearTimeout(timeoutId!);
       return setCorsHeaders(NextResponse.json({ 
+        success: false,
         error: `调用图像处理API失败: ${apiError.message || '未知错误'}` 
       }, { status: 500 }));
     }
@@ -271,6 +380,7 @@ export async function POST(request: NextRequest) {
     }
     
     return setCorsHeaders(NextResponse.json({ 
+      success: false,
       error: `处理图片失败: ${error.message || '未知错误'}` 
     }, { status: 500 }));
   }
