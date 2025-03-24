@@ -9,8 +9,8 @@ import { randomUUID } from 'crypto';
 // 将exec转换为Promise版本
 const execPromise = promisify(exec);
 
-// 设置最大处理时间（秒）
-export const maxDuration = 300;
+// 设置最大处理时间（秒）- 修改为Hobby计划的最大值
+export const maxDuration = 60;
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
