@@ -532,7 +532,7 @@ export default function Home() {
             ))}
           </div>
           <p className="text-lg md:text-xl text-gray-300 max-w-2xl leading-relaxed mb-8">
-            专业的AI图片(Photo Enhancer Pro)增强工具，使用顶尖CodeFormer AI模型，一键修复微信压缩失真，提升照片清晰度，让您的朋友圈照片展现完美画质
+            专业的AI图片(Photo Enhancer Pro)增强工具，一键修复微信压缩失真，提升照片清晰度，让您的朋友圈照片展现完美画质
           </p>
           <div className="mt-4">
             <Button className="button-primary rounded-full px-8 py-6 text-lg">
@@ -681,7 +681,7 @@ export default function Home() {
                   ? '朋友圈模式：短边1080px，长边等比例缩放，确保图片在朋友圈显示清晰不被压缩'
                   : mode === 'xiaohongshu'
                   ? '小红书模式：3:4比例，1280*1706像素，确保在小红书上获得最佳展示效果不被压缩'
-                  : '4K蓝光模式：提升至4K级别，应用蓝光级别的细节和色彩增强，处理后可以选择朋友圈防压缩和小红书防压缩再处理一遍哦（在线处理，根据您的网速，大约需要10-30秒）'}
+                  : '4K蓝光模式：提升至4K级别，应用蓝光级别的细节和色彩增强（在线处理，根据您的网速，大约需要10-30秒）'}
               </p>
             </div>
             
