@@ -68,7 +68,7 @@ export default function RootLayout({
         <meta name="baidu-site-verification" content="codeva-ruHWtJSvnS" />
         <meta name="msvalidate.01" content="D27559B64E907A337CB7F3C0CF655EDB" />
         <meta name="bytedance-verification-code" content="CklYgsH5W4ONWXFxGBO3" />
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4590211004253246" crossorigin="anonymous"></script>
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4590211004253246" crossOrigin="anonymous"></script>
       </head>
       <body className={inter.className}>
         <I18nProvider>
