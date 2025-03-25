@@ -374,7 +374,7 @@ export default function Home() {
           // 绘制调整后的图片
           ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
           
-          // 将canvas内容转换为Blob
+          // 将canvas内容转换为Blob - 使用较低的质量进行隐形压缩（0.75而不是0.92）
           const processedBlob = await new Promise<Blob>((resolve) => {
             canvas.toBlob((blob) => {
               if (blob) {
@@ -382,7 +382,7 @@ export default function Home() {
               } else {
                 throw new Error('无法将canvas转换为Blob');
               }
-            }, 'image/jpeg', 0.92);
+            }, 'image/jpeg', 0.75); // 降低质量以减小文件大小
           });
           
           // 创建FormData对象
@@ -516,8 +516,8 @@ export default function Home() {
               ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
             }
             
-            // 将canvas内容转换为图片
-            const processedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+            // 将canvas内容转换为图片 - 使用较低的质量进行隐形压缩（0.75而不是0.92）
+            const processedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
             
             // 保存当前模式下的处理结果
             setProcessedImages(prev => ({
