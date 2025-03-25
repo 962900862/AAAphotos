@@ -22,8 +22,41 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import { useTranslation } from "react-i18next";
+
+// 创建一个简单的全局锁定机制
+let translationInProgress = false;
+
+// 处理点击事件的全局函数
+const handleGlobalClick = (e: MouseEvent) => {
+  // 检查如果翻译正在进行中，则阻止所有点击
+  if (translationInProgress) {
+    e.stopPropagation();
+    e.preventDefault();
+    console.log("系统正在处理中，请稍等...");
+    return false;
+  }
+  return true;
+};
+
+// 扩展Window接口以支持翻译相关的全局属性和方法
+declare global {
+  interface Window {
+    siteLanguage?: string;
+    translationDict?: Record<string, string>;
+    originalTexts?: Map<any, string>;
+    translate?: () => boolean;
+    translationObserver?: MutationObserver;
+    pauseTranslation?: () => void;
+    resumeTranslation?: () => void;
+    reapplyTranslations?: () => void;
+    domLock?: boolean;
+    translationInProgress?: boolean;
+  }
+}
 
 export default function Home() {
+  const { t } = useTranslation();
   const [progress, setProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -58,30 +91,50 @@ export default function Home() {
 
   // 全屏功能
   const toggleFullscreen = () => {
-    if (!imageContainerRef.current) return;
+    // 检查系统是否正在处理中
+    if (typeof window !== 'undefined' && window.translationInProgress) {
+      console.log("系统正在处理中，请等待操作完成后再尝试切换全屏");
+      toast({
+        variant: "destructive",
+        title: "请稍等",
+        description: "系统正在处理中，请等待完成后再操作",
+      });
+      return;
+    }
     
-    if (!document.fullscreenElement) {
-      // 进入全屏
-      imageContainerRef.current.requestFullscreen()
-        .then(() => {
-          setIsFullscreen(true);
-        })
-        .catch(err => {
-          toast({
-            variant: "destructive",
-            title: "全屏模式失败",
-            description: `Error: ${err.message}`,
+    try {
+      // 确保容器引用有效
+      if (!imageContainerRef.current || !document.body.contains(imageContainerRef.current)) {
+        console.error('无法获取有效的图片容器引用');
+        return;
+      }
+      
+      if (!document.fullscreenElement) {
+        // 进入全屏
+        imageContainerRef.current.requestFullscreen()
+          .then(() => {
+            setIsFullscreen(true);
+          })
+          .catch(err => {
+            console.error("全屏模式失败:", err);
+            toast({
+              variant: "destructive",
+              title: "全屏模式失败",
+              description: `错误: ${err.message}`,
+            });
           });
-        });
-    } else {
-      // 退出全屏
-      document.exitFullscreen()
-        .then(() => {
-          setIsFullscreen(false);
-        })
-        .catch(err => {
-          console.error("退出全屏失败:", err);
-        });
+      } else {
+        // 退出全屏
+        document.exitFullscreen()
+          .then(() => {
+            setIsFullscreen(false);
+          })
+          .catch(err => {
+            console.error("退出全屏失败:", err);
+          });
+      }
+    } catch (error) {
+      console.error("全屏切换出错:", error);
     }
   };
 
@@ -95,6 +148,27 @@ export default function Home() {
     
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  // 添加全局点击事件拦截
+  useEffect(() => {
+    // 定义事件处理函数
+    function globalEventHandler(e: MouseEvent) {
+      if (window.translationInProgress) {
+        // 如果翻译正在进行，阻止所有点击
+        e.stopPropagation();
+        e.preventDefault();
+        console.log("系统正在处理中，请稍等...");
+      }
+    }
+    
+    // 在捕获阶段注册，先于其他事件处理程序执行
+    document.addEventListener('click', globalEventHandler, true);
+    
+    // 清理函数
+    return () => {
+      document.removeEventListener('click', globalEventHandler, true);
     };
   }, []);
 
@@ -161,28 +235,57 @@ export default function Home() {
   };
 
   const removeUploadedImage = () => {
-    setUploadedImage(null);
-    setProcessedImage(null);
-    // 重置所有模式的处理结果
-    setProcessedImages({
-      wechat: null,
-      xiaohongshu: null,
-      '4k': null
-    });
-    setProcessedDimensions({
-      wechat: { width: 0, height: 0 },
-      xiaohongshu: { width: 0, height: 0 },
-      '4k': { width: 0, height: 0 }
-    });
-    setProgress(0);
-    setModeChanged(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    // 检查系统是否正在处理中
+    if (typeof window !== 'undefined' && window.translationInProgress) {
+      console.log("系统正在处理中，请等待操作完成后再尝试移除图片");
+      toast({
+        variant: "destructive",
+        title: t('notifications.busy.title'),
+        description: t('notifications.busy.text'),
+      });
+      return;
+    }
+    
+    try {
+      // 清除状态
+      setUploadedImage(null);
+      setProcessedImage(null);
+      // 重置所有模式的处理结果
+      setProcessedImages({
+        wechat: null,
+        xiaohongshu: null,
+        '4k': null
+      });
+      setProcessedDimensions({
+        wechat: { width: 0, height: 0 },
+        xiaohongshu: { width: 0, height: 0 },
+        '4k': { width: 0, height: 0 }
+      });
+      setProgress(0);
+      setModeChanged(false);
+      
+      // 安全地重置文件输入
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('移除图片时出错:', error);
     }
   };
 
   const processImage = () => {
     if (!uploadedImage) return;
+    
+    // 检查系统是否正在处理中
+    if (typeof window !== 'undefined' && window.translationInProgress) {
+      console.log("系统正在处理中，请等待操作完成后再尝试处理图片");
+      toast({
+        variant: "destructive",
+        title: t('notifications.busy.title'),
+        description: t('notifications.busy.text'),
+      });
+      return;
+    }
     
     setIsProcessing(true);
     setProgress(0);
@@ -276,8 +379,8 @@ export default function Home() {
             
             // 显示成功提示
             toast({
-              title: "4K蓝光处理完成",
-              description: "图片处理成功，可以下载或直接分享。",
+              title: t('notifications.processing.success.4k'),
+              description: t('notifications.processing.successText'),
             });
           } else {
             throw new Error(result.error || '图片处理失败');
@@ -381,8 +484,10 @@ export default function Home() {
             
             // 显示成功提示
             toast({
-              title: `${mode === 'wechat' ? '朋友圈' : '小红书'}处理完成`,
-              description: "图片处理成功，好用的话记得分享哦~。",
+              title: mode === 'wechat' 
+                ? t('notifications.processing.success.wechat') 
+                : t('notifications.processing.success.xiaohongshu'),
+              description: t('notifications.processing.successText'),
             });
           } else {
             // 如果无法获取canvas上下文，回退到原图
@@ -393,8 +498,8 @@ export default function Home() {
             // 使用toast显示错误
             toast({
               variant: "destructive",
-              title: "处理图片失败",
-              description: "图片处理过程中遇到错误，已恢复为原图。请尝试其他图片或稍后重试。",
+              title: t('notifications.processing.failure'),
+              description: t('notifications.processing.failureText'),
             });
           }
         }
@@ -408,8 +513,8 @@ export default function Home() {
         // 使用toast显示错误
         toast({
           variant: "destructive",
-          title: "处理图片失败",
-          description: error instanceof Error ? error.message : "图片处理过程中遇到错误，已恢复为原图。请尝试其他图片或稍后重试。",
+          title: t('notifications.processing.failure'),
+          description: error instanceof Error ? error.message : t('notifications.processing.failureText'),
         });
       } finally {
         // 确保清除进度条计时器
@@ -425,8 +530,8 @@ export default function Home() {
       // 使用toast显示错误
       toast({
         variant: "destructive",
-        title: "图片加载失败",
-        description: "无法加载图片，请检查图片格式是否支持或尝试其他图片。",
+        title: t('notifications.processing.loadFailure'),
+        description: t('notifications.processing.loadFailureText'),
       });
     };
     
@@ -436,23 +541,65 @@ export default function Home() {
   const downloadImage = () => {
     if (!processedImage) return;
     
-    // 创建链接元素
-    const link = document.createElement('a');
-    link.href = processedImage;
-    link.download = mode === 'wechat' 
-      ? `wechat_enhanced_${new Date().getTime()}.jpg` 
-      : mode === 'xiaohongshu'
-      ? `xiaohongshu_${new Date().getTime()}.jpg`
-      : `4K_enhanced_${new Date().getTime()}.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    // 下载成功提示
-    toast({
-      title: "图片下载成功",
-      description: "您可以立即分享到社交平台。",
-    });
+    // 如果正在翻译中，阻止下载
+    if (typeof window !== 'undefined' && window.translationInProgress) {
+      console.log("系统正在处理中，请稍等...");
+      toast({
+        variant: "destructive",
+        title: t('notifications.busy.title'),
+        description: t('notifications.busy.text'),
+      });
+      return;
+    }
+    
+    try {
+      // 使用URL.createObjectURL方法创建一个blob URL
+      fetch(processedImage)
+        .then(response => response.blob())
+        .then(blob => {
+          // 创建blob URL
+          const blobUrl = URL.createObjectURL(blob);
+          
+          // 创建一个隐藏的a标签
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = blobUrl;
+          a.download = mode === 'wechat' 
+            ? `wechat_enhanced_${new Date().getTime()}.jpg` 
+            : mode === 'xiaohongshu'
+            ? `xiaohongshu_${new Date().getTime()}.jpg`
+            : `4K_enhanced_${new Date().getTime()}.jpg`;
+          
+          // 模拟点击
+          a.click();
+          
+          // 释放URL对象，因为已不需要，这是一个良好的实践
+          setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+          }, 100);
+          
+          // 下载成功提示
+          toast({
+            title: t('notifications.download.success'),
+            description: t('notifications.download.shareText'),
+          });
+        })
+        .catch(err => {
+          console.error('下载图片时出错:', err);
+          toast({
+            variant: "destructive",
+            title: t('notifications.download.failure'),
+            description: t('notifications.download.failureText'),
+          });
+        });
+    } catch (err) {
+      console.error('下载图片时出错:', err);
+      toast({
+        variant: "destructive",
+        title: t('notifications.download.failure'),
+        description: t('notifications.download.failureText'),
+      });
+    }
   };
 
   const CrystalLogo = () => (
@@ -474,47 +621,92 @@ export default function Home() {
 
   const testimonials = [
     {
-      name: "Yuxiii",
+      name: t('testimonials.users.user1'),
       avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8yZ-tixAWh88x5K25PoqBgkfEFQm-vWh-nA&s",
-      comment: "照片质量提升很明显，朋友圈照片终于不会被压得模糊了！",
+      comment: t('testimonials.comments.comment1'),
       rating: 5
     },
     {
-      name: "小巷子",
+      name: t('testimonials.users.user2'),
       avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCCRl9eKjcwK30bqLP25AJzr1vMYBwMBBDDQ&s",
-      comment: "界面简单易用，效果非常专业，推荐给需要的朋友。",
+      comment: t('testimonials.comments.comment2'),
       rating: 5
     },
     {
-      name: "喜欢蛋糕",
+      name: t('testimonials.users.user3'),
       avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_AWxjVhXrye2Tg0VGJfu_JeyrI9ovkao28w&s",
-      comment: "一键处理，方便快捷，照片清晰度提升很多！",
+      comment: t('testimonials.comments.comment3'),
       rating: 5
     }
   ];
 
   const faqs = [
     {
-      question: "如何使用这个工具？",
-      answer: "只需将您的图片拖入上传区域或点击选择文件，选择需要的格式（朋友圈、小红书或4K蓝光），点击开始处理即可。处理完成后可以下载或直接分享。"
+      question: t('faq.questions.q1'),
+      answer: t('faq.answers.a1')
     },
     {
-      question: "支持哪些图片格式？",
-      answer: "目前支持主流图片格式，包括JPG、PNG、WEBP等。建议上传原图以获得最佳效果。"
+      question: t('faq.questions.q2'),
+      answer: t('faq.answers.a2')
     },
     {
-      question: "处理后的图片会占用更多空间吗？",
-      answer: "不会，我们采用智能压缩技术，在提升画质的同时保持合理的文件大小。"
+      question: t('faq.questions.q3'),
+      answer: t('faq.answers.a3')
     },
     {
-      question: "小红书封面和朋友圈图片有什么区别？",
-      answer: "小红书封面会按照平台推荐的3:4比例进行优化处理再进行像素ai增强，而朋友圈图片则保持短边1080px的高清标准。"
+      question: t('faq.questions.q4'),
+      answer: t('faq.answers.a4')
     },
     {
-      question: "什么是4K蓝光增强？",
-      answer: "我们使用CodeFormer AI模型在线处理，能够智能提升图片分辨率至4K级别，同时增强细节和色彩，修复人脸和背景，使照片更加清晰锐利，呈现出蓝光级别的高清画质。此服务完全免费。"
+      question: t('faq.questions.q5'),
+      answer: t('faq.answers.a5')
     }
   ];
+
+  // 添加安全的模式切换函数
+  const handleModeChange = (newMode: 'wechat' | 'xiaohongshu' | '4k') => {
+    // 防止处理中切换
+    if (isProcessing) return;
+    
+    // 检查系统是否正在处理中
+    if (typeof window !== 'undefined' && window.translationInProgress) {
+      console.log("系统正在处理中，请等待操作完成后再尝试");
+      toast({
+        variant: "destructive",
+        title: t('notifications.busy.title'),
+        description: t('notifications.busy.text'),
+      });
+      return;
+    }
+    
+    try {
+      // 保存当前模式的处理结果
+      if (processedImage) {
+        setProcessedImages(prev => ({
+          ...prev,
+          [mode]: processedImage
+        }));
+      }
+      
+      // 切换模式
+      setMode(newMode);
+      
+      // 更新处理图片
+      const processedModeImage = processedImages[newMode];
+      setProcessedImage(processedModeImage);
+      
+      // 如果需要处理，提示用户
+      if (!processedModeImage && uploadedImage) {
+        setModeChanged(true);
+        toast({
+          title: t('modeSwitch.title'),
+          description: t(`modeSwitch.to${newMode}`),
+        });
+      }
+    } catch (error) {
+      console.error('模式切换出错:', error);
+    }
+  };
 
   return (
     <main className="min-h-screen hero-gradient text-white">
@@ -524,13 +716,20 @@ export default function Home() {
         <div className="flex flex-col items-center text-center mb-8 md:mb-12">
           <CrystalLogo />
           <h1 className="text-4xl md:text-5xl font-bold shine-text mb-2">
-            AI 图片增强工具 | 照片超清处理
+            {t('hero.title')}
           </h1>
           <h2 className="text-2xl md:text-3xl font-medium text-[#ec4899] mb-6">
-            Socialphotps.site
+            {t('hero.subtitle')}
           </h2>
           <div className="flex flex-wrap gap-2 justify-center mb-8">
-            {['图片增强工具', '照片修复', 'AI图像超分', 'CodeFormer模型', '自媒体神器', '一键4K增强'].map((tag, index) => (
+            {[
+              t('tags.imageEnhancer'), 
+              t('tags.photoRepair'), 
+              t('tags.aiUpscale'), 
+              t('tags.codeformer'), 
+              t('tags.contentCreator'), 
+              t('tags.oneClick4k')
+            ].map((tag, index) => (
               <span 
                 key={index} 
                 className="px-4 py-1.5 rounded-full bg-gradient-to-r from-[#4f46e5]/30 to-[#ec4899]/30 text-sm font-medium text-white backdrop-blur-md border border-white/20 hover:border-white/40 hover:from-[#4f46e5]/40 hover:to-[#ec4899]/40 transition-all shadow-sm hover:shadow-[0_0_10px_rgba(236,72,153,0.3)] transform hover:scale-105 duration-300"
@@ -540,12 +739,12 @@ export default function Home() {
             ))}
           </div>
           <p className="text-lg md:text-xl text-gray-300 max-w-2xl leading-relaxed mb-8">
-            专业的AI图片(Photo Enhancer Pro)增强工具，一键修复微信压缩失真，提升照片清晰度，让您的朋友圈照片展现完美画质
+            {t('hero.description')}
           </p>
           <div className="mt-4">
             <Button className="button-primary rounded-full px-8 py-6 text-lg">
               <Sparkles className="w-5 h-5 mr-2" />
-              免费，无限制使用
+              {t('hero.freeUse')}
             </Button>
           </div>
         </div>
@@ -553,7 +752,7 @@ export default function Home() {
         {/* AI 增强设置 - 水平版 */}
         <div className="mt-8 p-4 bg-white/5 border border-white/10 rounded-xl max-w-4xl mx-auto mb-12">
           <h3 className="text-xl font-semibold mb-4 shine-text text-center">
-            AI 增强设置
+            {t('settings.title')}
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -565,38 +764,15 @@ export default function Home() {
                       ? 'bg-[#4f46e5] text-white' 
                       : 'bg-white/10 text-gray-300 hover:bg-white/20'
                   }`}
-                  onClick={() => {
-                    // 保存当前处理后的图片
-                    if (processedImage) {
-                      setProcessedImages(prev => ({
-                        ...prev,
-                        [mode]: processedImage
-                      }));
-                    }
-                    
-                    // 切换模式
-                    setMode('4k');
-                    
-                    // 显示该模式下已有的处理结果
-                    const processed4kImage = processedImages['4k'];
-                    setProcessedImage(processed4kImage);
-                    
-                    // 如果此模式下没有处理过，显示提示
-                    if (!processed4kImage && uploadedImage) {
-                      setModeChanged(true);
-                      toast({
-                        title: "模式已切换",
-                        description: "已切换至4K蓝光模式，请点击处理按钮",
-                      });
-                    }
-                  }}
+                  data-mode="4k"
+                  onClick={() => handleModeChange('4k')}
                 >
                   {mode === '4k' ? (
                     <img src="https://pic1.imgdb.cn/item/67dcfbc988c538a9b5c29517.png" alt="4K蓝光" className="w-5 h-5" />
                   ) : (
                     <ZapIcon className="w-5 h-5" />
                   )}
-                  <span>图片一键4k质量</span>
+                  <span>{t('settings.4kMode')}</span>
                 </button>
                 
                 <button 
@@ -605,38 +781,15 @@ export default function Home() {
                       ? 'bg-[#4f46e5] text-white' 
                       : 'bg-white/10 text-gray-300 hover:bg-white/20'
                   }`}
-                  onClick={() => {
-                    // 保存当前处理后的图片
-                    if (processedImage) {
-                      setProcessedImages(prev => ({
-                        ...prev,
-                        [mode]: processedImage
-                      }));
-                    }
-                    
-                    // 切换模式
-                    setMode('wechat');
-                    
-                    // 显示该模式下已有的处理结果
-                    const processedWechatImage = processedImages['wechat'];
-                    setProcessedImage(processedWechatImage);
-                    
-                    // 如果此模式下没有处理过，显示提示
-                    if (!processedWechatImage && uploadedImage) {
-                      setModeChanged(true);
-                      toast({
-                        title: "模式已切换",
-                        description: "已切换至朋友圈超清模式，请点击处理按钮",
-                      });
-                    }
-                  }}
+                  data-mode="wechat"
+                  onClick={() => handleModeChange('wechat')}
                 >
                   {mode === 'wechat' ? (
                     <img src="https://pic1.imgdb.cn/item/67dcfbc988c538a9b5c29517.png" alt="朋友圈" className="w-5 h-5" />
                   ) : (
                     <MessageCircle className="w-5 h-5" />
                   )}
-                  <span>朋友圈超清</span>
+                  <span>{t('settings.wechatMode')}</span>
                 </button>
                 
                 <button 
@@ -645,31 +798,8 @@ export default function Home() {
                       ? 'bg-[#4f46e5] text-white' 
                       : 'bg-white/10 text-gray-300 hover:bg-white/20'
                   }`}
-                  onClick={() => {
-                    // 保存当前处理后的图片
-                    if (processedImage) {
-                      setProcessedImages(prev => ({
-                        ...prev,
-                        [mode]: processedImage
-                      }));
-                    }
-                    
-                    // 切换模式
-                    setMode('xiaohongshu');
-                    
-                    // 显示该模式下已有的处理结果
-                    const processedXiaohongshuImage = processedImages['xiaohongshu'];
-                    setProcessedImage(processedXiaohongshuImage);
-                    
-                    // 如果此模式下没有处理过，显示提示
-                    if (!processedXiaohongshuImage && uploadedImage) {
-                      setModeChanged(true);
-                      toast({
-                        title: "模式已切换",
-                        description: "已切换至小红书封面模式，请点击处理按钮",
-                      });
-                    }
-                  }}
+                  data-mode="xiaohongshu"
+                  onClick={() => handleModeChange('xiaohongshu')}
                 >
                   <div className="w-5 h-5 relative flex items-center justify-center">
                     {mode === 'xiaohongshu' ? (
@@ -678,7 +808,7 @@ export default function Home() {
                       <BookOpen className="w-5 h-5" />
                     )}
                   </div>
-                  <span>小红书封面</span>
+                  <span>{t('settings.xiaohongshuMode')}</span>
                 </button>
               </div>
             </div>
@@ -686,10 +816,10 @@ export default function Home() {
             <div className="md:col-span-2 border-r border-white/10 pr-4">
               <p className="text-sm text-gray-300 max-w-2xl">
                 {mode === 'wechat'
-                  ? '朋友圈模式：短边1080px，长边等比例缩放，确保图片在朋友圈显示清晰不被压缩'
+                  ? t('settings.wechatDescription')
                   : mode === 'xiaohongshu'
-                  ? '小红书模式：3:4比例，1280*1706像素，确保在小红书上获得最佳展示效果不被压缩'
-                  : '4K蓝光模式：提升至4K级别，应用蓝光级别的细节和色彩增强（在线处理，根据您的网速，大约需要10-30秒）'}
+                  ? t('settings.xiaohongshuDescription')
+                  : t('settings.4kDescription')}
               </p>
             </div>
             
@@ -697,7 +827,7 @@ export default function Home() {
               <div className="flex flex-col gap-3">
                 <div className="mb-2">
                   <label className="text-xs text-gray-300 mb-1 block">
-                    处理进度
+                    {t('settings.progress')}
                   </label>
                   <Progress value={progress} className="w-full h-2 rounded-full progress-bar">
                     <div 
@@ -717,7 +847,7 @@ export default function Home() {
                     onClick={processImage}
                   >
                     <Sparkles className="w-3 h-3 mr-1" />
-                    {isProcessing ? '处理中' : '处理'}
+                    {isProcessing ? t('settings.processing') : t('settings.process')}
                   </Button>
                   
                   <Button 
@@ -726,7 +856,7 @@ export default function Home() {
                     onClick={downloadImage}
                   >
                     <Download className="w-3 h-3 mr-1" />
-                    下载
+                    {t('settings.download')}
                   </Button>
                 </div>
               </div>
@@ -769,18 +899,6 @@ export default function Home() {
                   {/* 分屏对比显示 - 仅在4K模式且有处理后图片时显示 */}
                   {mode === '4k' && processedImage ? (
                     <div className="relative w-full h-[300px] md:h-[650px] overflow-hidden rounded-lg mb-4" ref={imageContainerRef}>
-
-                      
-                      {/* 删除按钮 */}
-                      <div className="absolute top-2 right-2 z-20">
-                        <button
-                          className="bg-black/50 hover:bg-black/70 rounded-full p-1 transition-colors"
-                          onClick={removeUploadedImage}
-                        >
-                          <X className="w-5 h-5 text-white" />
-                        </button>
-                      </div>
-                      
                       {/* 全屏按钮 */}
                       <div className="absolute bottom-2 right-2 z-20">
                         <button
@@ -794,7 +912,7 @@ export default function Home() {
                       <div className="flex h-full relative">
                         <div className="w-1/2 relative border-r border-white/30">
                           <div className="absolute top-2 left-2 z-10 bg-white/80 text-gray-900 text-xs font-medium px-2 py-1 rounded-full">
-                            原图
+                            {t('processing.original')}
                           </div>
                           <div className="absolute top-2 right-2 z-10 bg-white/30 text-white text-xs font-medium px-2 py-1 rounded-full hidden md:block">
                             {imageDimensions.width > 0 && `${Math.round(imageDimensions.width)} × ${Math.round(imageDimensions.height)} px`}
@@ -808,7 +926,7 @@ export default function Home() {
                         </div>
                         <div className="w-1/2 relative">
                           <div className="absolute top-2 left-2 z-10 bg-[#34d399]/80 text-white text-xs font-medium px-2 py-1 rounded-full">
-                            4K增强
+                            {t('processing.enhanced.4k')}
                           </div>
                           <div className="absolute top-2 right-2 z-10 bg-white/30 text-white text-xs font-medium px-2 py-1 rounded-full hidden md:block">
                             {processedDimensions['4k'].width > 0 ? 
@@ -844,7 +962,7 @@ export default function Home() {
                       />
                       {processedImage && (
                         <div className={`absolute top-2 left-2 ${mode === 'wechat' ? 'bg-green-500/80' : mode === 'xiaohongshu' ? 'bg-[#ff2e51]/80' : 'bg-[#34d399]/80'} text-white text-xs font-medium px-2 py-1 rounded-full`}>
-                          {mode === 'wechat' ? '朋友圈已优化' : mode === 'xiaohongshu' ? '小红书已优化' : '4K蓝光已增强'}
+                          {mode === 'wechat' ? t('processing.enhanced.wechat') : mode === 'xiaohongshu' ? t('processing.enhanced.xiaohongshu') : t('processing.enhanced.bluray')}
                         </div>
                       )}
                       {mode === 'xiaohongshu' && processedImage && (
@@ -867,13 +985,41 @@ export default function Home() {
                     </div>
                   )}
                   
-                  <p className="text-white text-sm">
-                    {processedImage 
-                      ? `处理完成，可以下载${mode === 'wechat' ? '或分享到朋友圈' : mode === 'xiaohongshu' ? '或上传到小红书' : '您的4K蓝光增强图'}` 
-                      : modeChanged 
-                      ? `模式已切换为${mode === 'wechat' ? '朋友圈超清' : mode === 'xiaohongshu' ? '小红书封面' : '4K蓝光增强'}，点击处理按钮重新优化` 
-                      : "已上传图片，点击处理按钮开始优化"}
-                  </p>
+                  {processedImage ? (
+                    <p className="text-white text-sm">
+                      {mode === 'wechat'
+                        ? t('processing.complete.wechat')
+                        : mode === 'xiaohongshu'
+                        ? t('processing.complete.xiaohongshu')
+                        : t('processing.complete.4k')}
+                    </p>
+                  ) : (
+                    <div className="flex flex-col md:flex-row items-center justify-center mt-2 gap-3">
+                      <button
+                        onClick={processImage}
+                        disabled={isProcessing}
+                        className="bg-[#4f46e5] hover:bg-[#4338ca] text-white font-medium rounded-full px-5 py-2 flex items-center gap-2 shadow-lg shadow-[#4f46e5]/30 transition-all"
+                      >
+                        {isProcessing ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>{t('settings.processing')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Wand2 className="w-4 h-4" />
+                            <span>{t('processing.startProcess')}</span>
+                          </>
+                        )}
+                      </button>
+                      
+                      {modeChanged && (
+                        <p className="text-white/70 text-sm">
+                          {t(`modeSwitch.to${mode}`)}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>
@@ -888,13 +1034,13 @@ export default function Home() {
                   <p className={`text-lg md:text-xl font-medium transition-all duration-300 ${
                     isDragging ? 'text-[#ec4899]' : 'text-gray-300'
                   }`}>
-                    拖入图片或点击上传
+                    {t('upload.dragOrClick')}
                   </p>
-                  <p className="text-xs md:text-sm text-gray-400 mt-2 md:mt-3">支持 JPG、PNG 等图片格式</p>
+                  <p className="text-xs md:text-sm text-gray-400 mt-2 md:mt-3">{t('upload.supportedFormats')}</p>
                   {mode === 'xiaohongshu' && (
                     <div className="mt-3 md:mt-4 flex items-center bg-[#ff2e51]/10 rounded-full px-2 md:px-3 py-1">
                       <img src="https://pic1.imgdb.cn/item/67dcfbaf88c538a9b5c294b3.png" alt="小红书" className="w-4 h-4 mr-1 md:mr-2" />
-                      <span className="text-[10px] md:text-xs text-[#ff2e51]">小红书最佳封面模式已开启</span>
+                      <span className="text-[10px] md:text-xs text-[#ff2e51]">{t('upload.xiaohongshuEnabled')}</span>
                     </div>
                   )}
                 </>
@@ -905,7 +1051,7 @@ export default function Home() {
 
         {/* Case Study Section */}
         <div className="mb-24">
-          <h2 className="text-3xl font-bold text-center mb-10 shine-text">使用案例</h2>
+          <h2 className="text-3xl font-bold text-center mb-10 shine-text">{t('caseStudy.title')}</h2>
           <div className="mx-auto max-w-xl rounded-xl overflow-hidden shadow-[0_0_30px_rgba(236,72,153,0.2)]">
             <img 
               src="https://tuchuang.org.cn/imgs/2025/03/22/89879711d95bbc5d.jpg" 
@@ -913,29 +1059,29 @@ export default function Home() {
               className="w-full object-cover"
             />
             <div className="p-4 bg-gradient-to-r from-[#4f46e5]/20 to-[#ec4899]/20 backdrop-blur-md">
-              <p className="text-center text-white text-sm md:text-base">超清处理效果展示 - 告别压缩失真，呈现原始画质</p>
+              <p className="text-center text-white text-sm md:text-base">{t('caseStudy.caption')}</p>
             </div>
           </div>
         </div>
 
         {/* Features Section */}
         <div className="mb-24">
-          <h2 className="text-3xl font-bold text-center mb-12 shine-text">主要功能</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 shine-text">{t('features.title')}</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                title: "AI 智能图像增强",
-                description: "使用CodeFormer AI技术自动识别场景，优化细节和色彩，修复模糊和噪点，让照片更加清晰锐利",
+                title: t('features.aiEnhancement.title'),
+                description: t('features.aiEnhancement.description'),
                 icon: Wand2,
               },
               {
-                title: "多平台图片优化",
-                description: "支持朋友圈超清图片、小红书高清封面和4K蓝光增强，满足各类社交媒体的图片需求",
+                title: t('features.multiPlatform.title'),
+                description: t('features.multiPlatform.description'),
                 icon: ImagePlus,
               },
               {
-                title: "人脸智能修复",
-                description: "CodeFormer AI模型能精准识别人脸细节，修复失真和模糊，让人像更加自然清晰",
+                title: t('features.faceRetouching.title'),
+                description: t('features.faceRetouching.description'),
                 icon: Share2,
               },
             ].map((feature, index) => (
@@ -958,7 +1104,7 @@ export default function Home() {
 
         {/* Testimonials Section */}
         <div className="mb-24">
-          <h2 className="text-3xl font-bold text-center mb-12 shine-text">用户评价</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 shine-text">{t('testimonials.title')}</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {testimonials.map((testimonial, index) => (
               <Card key={index} className="hero-card p-6">
@@ -985,7 +1131,7 @@ export default function Home() {
 
         {/* FAQ Section */}
         <div className="mb-24">
-          <h2 className="text-3xl font-bold text-center mb-12 shine-text">常见问题</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 shine-text">{t('faq.title')}</h2>
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {faqs.map((faq, index) => (
               <Card 
@@ -1013,11 +1159,11 @@ export default function Home() {
         <div className="text-center">
           <div className="flex justify-center items-center gap-4 mb-8">
             <CheckCircle2 className="w-6 h-6 text-[#ec4899]" />
-            <span className="text-gray-300">已有超过 3000+ 用户选择使用</span>
+            <span className="text-gray-300">{t('cta.users')}</span>
           </div>
           <Button className="button-primary rounded-full px-8 py-6 text-lg">
             <MessageCircle className="w-5 h-5 mr-2" />
-            立即体验
+            {t('cta.tryNow')}
           </Button>
         </div>
       </div>

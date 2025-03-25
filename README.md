@@ -1,141 +1,81 @@
-# PhotoChatPro
+# 社交图片增强工具 (SocialPhotos)
 
-PhotoChatPro 是一个强大的图片增强工具，专门为小红书平台优化，提供高清图片处理和主页美化功能。
+## 项目简介
 
-## 功能特点
+这是一个专为社交媒体设计的图片增强工具，可以自动优化图片质量，适配不同社交平台（微信、小红书等）的图片规格，并提供高清4K图片增强功能。该工具利用AI技术，能够快速处理图片，提升图片清晰度和品质。
 
-- 🖼️ 高清图片增强
-- 🎨 小红书主页优化
-- 🔄 批量图片处理
-- 🚀 4K 蓝光增强
-- 📱 移动端优化
-- 🔒 安全可靠
+## 功能特性
+
+- **多平台支持**：支持微信、小红书等多个社交平台的图片优化
+- **一键增强**：智能识别图片内容，自动增强图片质量
+- **4K超清处理**：提供4K超清图片增强功能
+- **简单易用**：拖拽上传图片，一键处理
+- **实时预览**：处理前后对比，效果一目了然
+- **全屏预览**：支持全屏查看处理后的图片效果
+- **便捷下载**：一键下载处理后的图片
 
 ## 技术栈
 
-- 前端：Next.js 14 + React 18 + TypeScript + Tailwind CSS
-- 后端：Python + CodeFormer AI
-- 部署：Vercel
-- 测试：Jest + React Testing Library
-- 代码质量：ESLint + Prettier + TypeScript
+- **前端**：Next.js、React、TypeScript、Tailwind CSS
+- **UI组件**：Radix UI、Lucide Icons
+- **AI模型**：CodeFormer（用于图像增强）
+- **API**：Gradio Client API
+- **图片存储**：360图床API
 
-## 快速开始
+## 开发环境设置
 
-### 环境要求
+### 前端开发
 
-- Node.js 18+
-- Python 3.9+
-- npm 或 yarn
-
-### 安装步骤
-
-1. 克隆仓库：
-   ```bash
-   git clone https://github.com/yourusername/photochatpro.git
-   cd photochatpro
-   ```
-
-2. 安装前端依赖：
-   ```bash
-   npm install
-   # 或
-   yarn install
-   ```
-
-3. 安装 Python 依赖：
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. 配置环境变量：
-   ```bash
-   cp .env.example .env.local
-   # 编辑 .env.local 文件，填入必要的配置
-   ```
-
-5. 启动开发服务器：
-   ```bash
-   npm run dev
-   # 或
-   yarn dev
-   ```
-
-### 测试
-
-运行测试：
+1. 安装依赖：
 ```bash
-npm test
-# 或
-yarn test
+npm install
 ```
 
-### 构建
+2. 启动开发服务器：
+```bash
+npm run dev
+```
 
-构建生产版本：
+3. 构建生产版本：
 ```bash
 npm run build
-# 或
-yarn build
 ```
 
-## 项目结构
+### Python 环境设置 (API增强功能)
 
+详细的Python环境设置请参考 [PYTHON_SETUP.md](PYTHON_SETUP.md)
+
+## 使用说明
+
+1. 打开网页应用
+2. 点击上传按钮或直接拖拽图片到指定区域
+3. 选择需要的处理模式（微信、小红书或4K增强）
+4. 点击"增强图片"按钮进行处理
+5. 处理完成后，可以预览、全屏查看或下载图片
+
+## 部署
+
+项目支持多种部署方式：
+
+- **Vercel部署**：
+```bash
+npm run deploy:vercel
 ```
-photochatpro/
-├── app/                    # Next.js 应用目录
-├── components/            # React 组件
-├── lib/                   # 工具函数和共享代码
-├── public/               # 静态资源
-├── scripts/              # 构建和部署脚本
-├── __tests__/           # 测试文件
-├── api_enhance.py       # Python 后端服务
-└── requirements.txt     # Python 依赖
+
+- **静态网站部署**：
+```bash
+npm run deploy:static
 ```
 
-## 贡献指南
+- **自定义部署**：
+```bash
+npm run deploy
+```
 
-1. Fork 项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+## 开发团队
 
-## 代码规范
-
-- 使用 ESLint 和 Prettier 进行代码格式化
-- 遵循 TypeScript 严格模式
-- 使用 Jest 和 React Testing Library 进行测试
-- 保持 80% 以上的测试覆盖率
-
-## 性能优化
-
-- 图片懒加载
-- 组件代码分割
-- 静态资源优化
-- 缓存策略
-
-## 安全措施
-
-- 输入验证
-- XSS 防护
-- CSRF 防护
-- 速率限制
-- 文件上传限制
+- 技术支持：AI增强型图像处理团队
 
 ## 许可证
 
-MIT License - 详见 [LICENSE](LICENSE) 文件
-
-## 更新日志
-
-### v0.1.0 (2024-03-18)
-- 初始版本发布
-- 基础图片增强功能
-- 小红书主页优化
-- 4K 蓝光增强
-
-## 联系方式
-
-- 项目维护者：[Your Name](https://github.com/yourusername)
-- 邮箱：your.email@example.com
-- 项目链接：[https://github.com/yourusername/photochatpro](https://github.com/yourusername/photochatpro)
+本项目采用 MIT 许可证 

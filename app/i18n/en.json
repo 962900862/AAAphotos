@@ -1,0 +1,149 @@
+{
+  "hero": {
+    "title": "AI Image Enhancement Tool | Photo HD Processing",
+    "subtitle": "Socialphotps.site",
+    "description": "Professional AI image enhancement tool (Photo Enhancer Pro), one-click fixing of WeChat compression distortion, improving photo clarity, and displaying perfect image quality for your social media photos",
+    "freeUse": "Free, Unlimited Use"
+  },
+  "tags": {
+    "imageEnhancer": "Image Enhancement Tool",
+    "photoRepair": "Photo Repair",
+    "aiUpscale": "AI Image Upscaling",
+    "codeformer": "CodeFormer Model",
+    "contentCreator": "Content Creator Tool",
+    "oneClick4k": "One-click 4K Enhancement"
+  },
+  "settings": {
+    "title": "AI Enhancement Settings",
+    "4kMode": "One-click 4K Quality",
+    "wechatMode": "WeChat Moments HD",
+    "xiaohongshuMode": "Xiaohongshu Cover",
+    "wechatDescription": "WeChat Moments mode: 1080px short edge, proportional scaling for long edge, ensuring clear display without compression",
+    "xiaohongshuDescription": "Xiaohongshu mode: 3:4 ratio, 1280*1706 pixels, ensuring optimal display without compression on Xiaohongshu",
+    "4kDescription": "4K Blu-ray mode: Enhances to 4K level, applies Blu-ray quality detail and color enhancement (online processing, takes about 10-30 seconds depending on your internet speed)",
+    "progress": "Processing Progress",
+    "process": "Process",
+    "processing": "Processing",
+    "download": "Download"
+  },
+  "modeSwitch": {
+    "title": "Mode Switched",
+    "to4k": "Switched to 4K Blu-ray mode, please click the Process button",
+    "toWechat": "Switched to WeChat Moments HD mode, please click the Process button",
+    "toXiaohongshu": "Switched to Xiaohongshu Cover mode, please click the Process button",
+    "modeSwitched": "Switched to {{mode}} mode"
+  },
+  "upload": {
+    "dragOrClick": "Drop image here or click to upload",
+    "supportedFormats": "Supports JPG, PNG and other image formats",
+    "xiaohongshuEnabled": "Xiaohongshu best cover mode enabled"
+  },
+  "processing": {
+    "complete": {
+      "wechat": "Processing complete, ready to download or share to WeChat Moments",
+      "xiaohongshu": "Processing complete, ready to download or upload to Xiaohongshu",
+      "4k": "Processing complete, ready to download your 4K Blu-ray enhanced image"
+    },
+    "startProcess": "Start Processing Image",
+    "original": "Original",
+    "enhanced": {
+      "4k": "4K Enhanced",
+      "wechat": "WeChat Moments Optimized",
+      "xiaohongshu": "Xiaohongshu Optimized",
+      "bluray": "4K Blu-ray Enhanced"
+    }
+  },
+  "features": {
+    "title": "Key Features",
+    "aiEnhancement": {
+      "title": "AI Smart Image Enhancement",
+      "description": "Using CodeFormer AI technology to automatically recognize scenes, optimize details and colors, fix blur and noise, making photos clearer and sharper"
+    },
+    "multiPlatform": {
+      "title": "Multi-platform Image Optimization",
+      "description": "Supports WeChat Moments HD images, Xiaohongshu high-definition covers, and 4K Blu-ray enhancement, meeting the image needs of various social media platforms"
+    },
+    "faceRetouching": {
+      "title": "Intelligent Face Restoration",
+      "description": "CodeFormer AI model can accurately identify facial details, fix distortion and blur, making portraits more natural and clear"
+    }
+  },
+  "caseStudy": {
+    "title": "Case Study",
+    "subtitle": "See how our AI technology helps users on different platforms",
+    "xiaohongshu": "Red Note",
+    "instagram": "Instagram",
+    "description1": "Users on Red Note use our technology to enhance their photos before posting",
+    "description2": "Instagram influencers use our AI tools to create engaging content"
+  },
+  "testimonials": {
+    "title": "User Reviews",
+    "users": {
+      "user1": "Yuxiii",
+      "user2": "Xiaoxiangzi",
+      "user3": "Cake Lover"
+    },
+    "comments": {
+      "comment1": "Photo quality improvement is very noticeable, WeChat Moments photos finally won't be compressed and blurry!",
+      "comment2": "Simple and easy-to-use interface with professional results, recommended to friends who need it.",
+      "comment3": "One-click processing, convenient and quick, photo clarity improved significantly!"
+    }
+  },
+  "faq": {
+    "title": "FAQ",
+    "questions": {
+      "q1": "How to use this tool?",
+      "q2": "What image formats are supported?",
+      "q3": "Will processed images take up more space?",
+      "q4": "What's the difference between Xiaohongshu cover and WeChat Moments images?",
+      "q5": "What is 4K Blu-ray enhancement?"
+    },
+    "answers": {
+      "a1": "Simply drag your image into the upload area or click to select a file, choose the required format (WeChat Moments, Xiaohongshu, or 4K Blu-ray), and click to start processing. After processing, you can download or share directly.",
+      "a2": "Currently supports mainstream image formats, including JPG, PNG, WEBP, etc. It is recommended to upload the original image for the best results.",
+      "a3": "No, we use intelligent compression technology to maintain a reasonable file size while improving image quality.",
+      "a4": "Xiaohongshu covers are optimized according to the platform's recommended 3:4 ratio and then enhanced with pixel AI, while WeChat Moments images maintain the HD standard with a short edge of 1080px.",
+      "a5": "We use the CodeFormer AI model for online processing, which can intelligently increase image resolution to 4K level, enhance details and colors, repair faces and backgrounds, making photos clearer and sharper, presenting Blu-ray level high-definition image quality. This service is completely free."
+    }
+  },
+  "cta": {
+    "users": "Over 3,000+ users have chosen to use",
+    "tryNow": "Try Now"
+  },
+  "footer": {
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "blog": "Blog",
+    "copyright": "© 2025 • socialphotos.site All Rights Reserved."
+  },
+  "language": {
+    "switchTitle": "Click to switch language / 点击切换语言",
+    "english": "🇺🇸 English",
+    "chinese": "🇨🇳 Chinese",
+    "switching": "Switching..."
+  },
+  "notifications": {
+    "download": {
+      "success": "Image downloaded successfully",
+      "shareText": "You can share it to social platforms immediately.",
+      "failure": "Download Failed",
+      "failureText": "An error occurred while downloading the image, please try again later."
+    },
+    "processing": {
+      "success": {
+        "4k": "4K Blu-ray processing complete",
+        "wechat": "WeChat Moments processing complete",
+        "xiaohongshu": "Xiaohongshu processing complete"
+      },
+      "successText": "Image processed successfully, ready to download or share.",
+      "failure": "Image Processing Failed",
+      "failureText": "An error occurred during image processing, reverted to original image. Please try another image or try again later.",
+      "loadFailure": "Image Loading Failed",
+      "loadFailureText": "Could not load the image, please check if the format is supported or try another image."
+    },
+    "busy": {
+      "title": "Please Wait",
+      "text": "System is currently processing, please wait until completion before making further operations"
+    }
+  }
+} 

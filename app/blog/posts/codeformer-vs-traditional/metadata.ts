@@ -9,4 +9,4 @@ export const metadata: Metadata = {
     description: '深入分析CodeFormer AI与传统图像增强技术的差异，为什么新一代AI模型能够提供更自然的结果。',
     images: ['https://pic1.imgdb.cn/item/67dcfbc988c538a9b5c29517.png'],
   },
-};
+}; 

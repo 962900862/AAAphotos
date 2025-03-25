@@ -1,0 +1,145 @@
+{
+  "hero": {
+    "title": "AI 图片增强工具 | 照片超清处理",
+    "subtitle": "Socialphotps.site",
+    "description": "专业的AI图片(Photo Enhancer Pro)增强工具，一键修复微信压缩失真，提升照片清晰度，让您的朋友圈照片展现完美画质",
+    "freeUse": "免费，无限制使用"
+  },
+  "tags": {
+    "imageEnhancer": "图片增强工具",
+    "photoRepair": "照片修复",
+    "aiUpscale": "AI图像超分",
+    "codeformer": "CodeFormer模型",
+    "contentCreator": "自媒体神器",
+    "oneClick4k": "一键4K增强"
+  },
+  "settings": {
+    "title": "AI 增强设置",
+    "4kMode": "图片一键4k质量",
+    "wechatMode": "朋友圈超清",
+    "xiaohongshuMode": "小红书封面",
+    "wechatDescription": "朋友圈模式：短边1080px，长边等比例缩放，确保图片在朋友圈显示清晰不被压缩",
+    "xiaohongshuDescription": "小红书模式：3:4比例，1280*1706像素，确保在小红书上获得最佳展示效果不被压缩",
+    "4kDescription": "4K蓝光模式：提升至4K级别，应用蓝光级别的细节和色彩增强（在线处理，根据您的网速，大约需要10-30秒）",
+    "progress": "处理进度",
+    "process": "处理",
+    "processing": "处理中",
+    "download": "下载"
+  },
+  "modeSwitch": {
+    "title": "模式已切换",
+    "to4k": "已切换至4K蓝光模式，请点击处理按钮",
+    "toWechat": "已切换至朋友圈超清模式，请点击处理按钮",
+    "toXiaohongshu": "已切换至小红书封面模式，请点击处理按钮",
+    "modeSwitched": "已切换至{{mode}}模式"
+  },
+  "upload": {
+    "dragOrClick": "拖入图片或点击上传",
+    "supportedFormats": "支持 JPG、PNG 等图片格式",
+    "xiaohongshuEnabled": "小红书最佳封面模式已开启"
+  },
+  "processing": {
+    "complete": {
+      "wechat": "处理完成，可以下载或分享到朋友圈",
+      "xiaohongshu": "处理完成，可以下载或上传到小红书",
+      "4k": "处理完成，可以下载您的4K蓝光增强图"
+    },
+    "startProcess": "开始处理图片",
+    "original": "原图",
+    "enhanced": {
+      "4k": "4K增强",
+      "wechat": "朋友圈已优化",
+      "xiaohongshu": "小红书已优化",
+      "bluray": "4K蓝光已增强"
+    }
+  },
+  "features": {
+    "title": "主要功能",
+    "aiEnhancement": {
+      "title": "AI 智能图像增强",
+      "description": "使用CodeFormer AI技术自动识别场景，优化细节和色彩，修复模糊和噪点，让照片更加清晰锐利"
+    },
+    "multiPlatform": {
+      "title": "多平台图片优化",
+      "description": "支持朋友圈超清图片、小红书高清封面和4K蓝光增强，满足各类社交媒体的图片需求"
+    },
+    "faceRetouching": {
+      "title": "人脸智能修复",
+      "description": "CodeFormer AI模型能精准识别人脸细节，修复失真和模糊，让人像更加自然清晰"
+    }
+  },
+  "caseStudy": {
+    "title": "使用案例",
+    "caption": "超清处理效果展示 - 告别压缩失真，呈现原始画质"
+  },
+  "testimonials": {
+    "title": "用户评价",
+    "users": {
+      "user1": "Yuxiii",
+      "user2": "小巷子",
+      "user3": "喜欢蛋糕"
+    },
+    "comments": {
+      "comment1": "照片质量提升很明显，朋友圈照片终于不会被压得模糊了！",
+      "comment2": "界面简单易用，效果非常专业，推荐给需要的朋友。",
+      "comment3": "一键处理，方便快捷，照片清晰度提升很多！"
+    }
+  },
+  "faq": {
+    "title": "常见问题",
+    "questions": {
+      "q1": "如何使用这个工具？",
+      "q2": "支持哪些图片格式？",
+      "q3": "处理后的图片会占用更多空间吗？",
+      "q4": "小红书封面和朋友圈图片有什么区别？",
+      "q5": "什么是4K蓝光增强？"
+    },
+    "answers": {
+      "a1": "只需将您的图片拖入上传区域或点击选择文件，选择需要的格式（朋友圈、小红书或4K蓝光），点击开始处理即可。处理完成后可以下载或直接分享。",
+      "a2": "目前支持主流图片格式，包括JPG、PNG、WEBP等。建议上传原图以获得最佳效果。",
+      "a3": "不会，我们采用智能压缩技术，在提升画质的同时保持合理的文件大小。",
+      "a4": "小红书封面会按照平台推荐的3:4比例进行优化处理再进行像素ai增强，而朋友圈图片则保持短边1080px的高清标准。",
+      "a5": "我们使用CodeFormer AI模型在线处理，能够智能提升图片分辨率至4K级别，同时增强细节和色彩，修复人脸和背景，使照片更加清晰锐利，呈现出蓝光级别的高清画质。此服务完全免费。"
+    }
+  },
+  "cta": {
+    "users": "已有超过 3000+ 用户选择使用",
+    "tryNow": "立即体验"
+  },
+  "footer": {
+    "privacy": "隐私政策",
+    "terms": "服务条款",
+    "blog": "博客",
+    "copyright": "© 2025 • socialphotos.site 保留所有权利。"
+  },
+  "language": {
+    "switchTitle": "点击切换语言 / Click to switch language",
+    "english": "🇺🇸 English",
+    "chinese": "🇨🇳 中文",
+    "switching": "切换中..."
+  },
+  "notifications": {
+    "download": {
+      "success": "图片下载成功",
+      "shareText": "您可以立即分享到社交平台。",
+      "failure": "下载失败",
+      "failureText": "下载图片时发生错误，请稍后重试。"
+    },
+    "processing": {
+      "success": {
+        "4k": "4K蓝光处理完成",
+        "wechat": "朋友圈处理完成",
+        "xiaohongshu": "小红书处理完成"
+      },
+      "successText": "图片处理成功，可以下载或直接分享。",
+      "failure": "处理图片失败",
+      "failureText": "图片处理过程中遇到错误，已恢复为原图。请尝试其他图片或稍后重试。",
+      "loadFailure": "图片加载失败",
+      "loadFailureText": "无法加载图片，请检查图片格式是否支持或尝试其他图片。"
+    },
+    "busy": {
+      "title": "请稍等",
+      "text": "系统正在处理中，请等待完成后再操作"
+    }
+  }
+} 
