@@ -344,20 +344,56 @@ export default function Home() {
       try {
         // 根据不同模式进行处理
         if (mode === '4k') {
-          // 4K蓝光模式：调用API进行处理
+          // 4K蓝光模式：先按照朋友圈处理图片的原则预处理，再调用API进行增强处理
           
-          // 将图片转换为Blob
-          const response = await fetch(uploadedImage);
-          const blob = await response.blob();
+          // 第一步：按照朋友圈模式预处理图片（短边1080px，长边等比例缩放）
+          let targetWidth: number = 0;
+          let targetHeight: number = 0;
+          
+          // 朋友圈模式：短边1080px，长边等比例缩放
+          if (img.width < img.height) {
+            // 图片是竖向的，宽度是短边
+            targetWidth = 1080;
+            targetHeight = Math.round((img.height / img.width) * 1080);
+          } else {
+            // 图片是横向的，高度是短边
+            targetHeight = 1080;
+            targetWidth = Math.round((img.width / img.height) * 1080);
+          }
+          
+          // 创建canvas来调整图片尺寸
+          const canvas = document.createElement('canvas');
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            throw new Error('无法创建canvas上下文');
+          }
+          
+          // 绘制调整后的图片
+          ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+          
+          // 将canvas内容转换为Blob
+          const processedBlob = await new Promise<Blob>((resolve) => {
+            canvas.toBlob((blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                throw new Error('无法将canvas转换为Blob');
+              }
+            }, 'image/jpeg', 0.92);
+          });
           
           // 创建FormData对象
           const formData = new FormData();
-          formData.append('image', blob, 'image.jpg');
+          formData.append('image', processedBlob, 'image.jpg');
           
           // 添加调试日志
-          console.log('准备向API发送请求:', {
+          console.log('准备向API发送预处理后的图片:', {
             url: '/api/enhance',
-            blobSize: blob.size,
+            blobSize: processedBlob.size,
+            dimensions: `${targetWidth}x${targetHeight}`,
             currentHost: window.location.origin
           });
           
@@ -365,9 +401,6 @@ export default function Home() {
           const apiResponse = await fetch('/api/enhance', {
             method: 'POST',
             body: formData,
-            // 移除可能导致问题的CORS设置
-            // mode: 'cors',
-            // credentials: 'omit',
           });
           
           if (!apiResponse.ok) {
