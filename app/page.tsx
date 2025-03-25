@@ -300,8 +300,47 @@ export default function Home() {
     }
   };
 
-  const processImage = () => {
-    if (!uploadedImage) return;
+  // 图片压缩函数
+  const compressImage = (imageDataUrl: string, maxWidth = 2048): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        // 如果图片尺寸小于最大宽度，不必压缩
+        if (img.width <= maxWidth) {
+          resolve(imageDataUrl);
+          return;
+        }
+        
+        // 计算新的尺寸，保持宽高比
+        const ratio = img.height / img.width;
+        const newWidth = maxWidth;
+        const newHeight = Math.round(newWidth * ratio);
+        
+        // 创建canvas进行压缩
+        const canvas = document.createElement('canvas');
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        const ctx = canvas.getContext('2d');
+        
+        if (ctx) {
+          // 绘制调整后的图片
+          ctx.drawImage(img, 0, 0, newWidth, newHeight);
+          
+          // 转换为dataURL格式，质量为0.88，保持较高质量
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+          resolve(compressedDataUrl);
+        } else {
+          // 如果无法获取context，返回原图
+          resolve(imageDataUrl);
+        }
+      };
+      img.src = imageDataUrl;
+    });
+  };
+
+  // 处理图片函数更新
+  const processImage = async () => {
+    if (!uploadedImage || isProcessing) return;
     
     // 检查系统是否正在处理中
     if (typeof window !== 'undefined' && window.translationInProgress) {
@@ -313,245 +352,239 @@ export default function Home() {
       });
       return;
     }
-    
-    setIsProcessing(true);
-    setProgress(0);
-    setModeChanged(false);
-    
-    // 创建一个新的Image对象来获取图片尺寸
-    const img = new Image();
-    img.onload = async () => {
-      // 进度条逻辑改进
-      let progressInterval: NodeJS.Timeout | undefined = undefined;
-      const startProgress = () => {
-        if (progressInterval) {
-          clearInterval(progressInterval);
-        }
-        progressInterval = setInterval(() => {
-          setProgress((prev) => {
-            if (prev >= 90) {
-              clearInterval(progressInterval);
-              return 90;
-            }
-            return prev + (prev < 30 ? 1 : (prev < 60 ? 0.5 : 0.2));
-          });
-        }, 100);
-      };
-      
-      // 开始进度
-      startProgress();
-      
-      try {
-        // 根据不同模式进行处理
-        if (mode === '4k') {
-          // 4K蓝光模式：先按照朋友圈处理图片的原则预处理，再调用API进行增强处理
-          
-          // 第一步：按照朋友圈模式预处理图片（短边1080px，长边等比例缩放）
-          let targetWidth: number = 0;
-          let targetHeight: number = 0;
-          
-          // 朋友圈模式：短边1080px，长边等比例缩放
-          if (img.width < img.height) {
-            // 图片是竖向的，宽度是短边
-            targetWidth = 1080;
-            targetHeight = Math.round((img.height / img.width) * 1080);
-          } else {
-            // 图片是横向的，高度是短边
-            targetHeight = 1080;
-            targetWidth = Math.round((img.width / img.height) * 1080);
-          }
-          
-          // 创建canvas来调整图片尺寸
-          const canvas = document.createElement('canvas');
-          canvas.width = targetWidth;
-          canvas.height = targetHeight;
-          const ctx = canvas.getContext('2d');
-          
-          if (!ctx) {
-            throw new Error('无法创建canvas上下文');
-          }
-          
-          // 绘制调整后的图片
-          ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-          
-          // 将canvas内容转换为Blob - 使用较低的质量进行隐形压缩（0.75而不是0.92）
-          const processedBlob = await new Promise<Blob>((resolve) => {
-            canvas.toBlob((blob) => {
-              if (blob) {
-                resolve(blob);
-              } else {
-                throw new Error('无法将canvas转换为Blob');
-              }
-            }, 'image/jpeg', 0.75); // 降低质量以减小文件大小
-          });
-          
-          // 创建FormData对象
-          const formData = new FormData();
-          formData.append('image', processedBlob, 'image.jpg');
-          
-          // 添加调试日志
-          console.log('准备向API发送预处理后的图片:', {
-            url: '/api/enhance',
-            blobSize: processedBlob.size,
-            dimensions: `${targetWidth}x${targetHeight}`,
-            currentHost: window.location.origin
-          });
-          
-          // 发送请求到API - 使用相对路径和适当的凭据设置
-          const apiResponse = await fetch('/api/enhance', {
-            method: 'POST',
-            body: formData,
-          });
-          
-          if (!apiResponse.ok) {
-            const errorText = await apiResponse.text();
-            console.error('API响应错误:', errorText);
-            throw new Error(`API返回错误: ${apiResponse.status}`);
-          }
-          
-          const result = await apiResponse.json();
-          
-          if (result.success && result.imageUrl) {
-            // 设置处理后的图片
-            const finalImage = await fetch(result.imageUrl);
-            const finalImageBlob = await finalImage.blob();
-            const finalImageUrl = URL.createObjectURL(finalImageBlob);
-            
-            // 保存当前模式下的处理结果
-            setProcessedImages(prev => ({
-              ...prev,
-              [mode]: finalImageUrl
-            }));
-            
-            setProcessedImage(finalImageUrl);
-            setProgress(100);
-            setIsProcessing(false);
-            
-            // 获取处理后图片尺寸
-            const processedImg = new Image();
-            processedImg.onload = () => {
-              setProcessedDimensions(prev => ({
-                ...prev,
-                [mode]: { width: processedImg.width, height: processedImg.height }
-              }));
-            };
-            processedImg.src = finalImageUrl;
-            
-            // 显示成功提示
-            toast({
-              title: t('notifications.processing.success.4k'),
-              description: t('notifications.processing.successText'),
-            });
-          } else {
-            throw new Error(result.error || '图片处理失败');
-          }
-        } else {
-          // 计算目标尺寸，根据不同模式进行处理
-          let targetWidth: number = 0;
-          let targetHeight: number = 0;
-          
-          if (mode === 'wechat') {
-            // 朋友圈模式：短边1080px，长边等比例缩放
-            if (img.width < img.height) {
-              // 图片是竖向的，宽度是短边
-              targetWidth = 1080;
-              targetHeight = Math.round((img.height / img.width) * 1080);
-            } else {
-              // 图片是横向的，高度是短边
-              targetHeight = 1080;
-              targetWidth = Math.round((img.width / img.height) * 1080);
-            }
-          } else if (mode === 'xiaohongshu') {
-            // 小红书模式：3:4比例，尺寸为1280*1706像素
-            targetWidth = 1280;
-            targetHeight = 1706;
-          }
 
-          // 创建canvas来调整图片尺寸
-          const canvas = document.createElement('canvas');
-          canvas.width = targetWidth;
-          canvas.height = targetHeight;
-          const ctx = canvas.getContext('2d');
+    setIsProcessing(true);
+    setProgress(5);
+
+    try {
+      let imageToProcess = uploadedImage;
+      
+      // 对于4K模式下的大图片，先进行压缩（无感处理）
+      if (mode === '4k') {
+        imageToProcess = await compressImage(uploadedImage, 2048);
+      }
+      
+      setProgress(10);
+      
+      // 检查是否需要创建新的图像处理
+      let createNew = false;
+      if (!processedImages[mode]) {
+        createNew = true;
+      } else if (modeChanged) {
+        createNew = true;
+        setModeChanged(false);
+      }
+      
+      if (createNew) {
+        // 创建新的处理任务
+        const img = new Image();
+        img.onload = async () => {
+          // 进度条逻辑改进
+          let progressInterval: NodeJS.Timeout | undefined = undefined;
+          const startProgress = () => {
+            if (progressInterval) {
+              clearInterval(progressInterval);
+            }
+            progressInterval = setInterval(() => {
+              setProgress((prev) => {
+                if (prev >= 90) {
+                  clearInterval(progressInterval);
+                  return 90;
+                }
+                return prev + (prev < 30 ? 1 : (prev < 60 ? 0.5 : 0.2));
+              });
+            }, 100);
+          };
           
-          if (ctx) {
-            // 绘制调整后的图片（居中裁剪方式）
-            if (mode === 'xiaohongshu') {
-              // 小红书模式下执行居中裁剪
-              // 先填充白色背景
-              ctx.fillStyle = '#ffffff';
-              ctx.fillRect(0, 0, targetWidth, targetHeight);
+          // 开始进度
+          startProgress();
+          
+          try {
+            // 根据不同模式进行处理
+            if (mode === '4k') {
+              // 4K蓝光模式：调用API进行处理
               
-              // 计算如何以3:4比例裁剪和缩放图片
-              const targetRatio = 3 / 4; // 目标比例3:4
-              const imgRatio = img.width / img.height;
+              // 将图片转换为Blob
+              const response = await fetch(imageToProcess);
+              const blob = await response.blob();
               
-              let sw: number, sh: number, sx: number, sy: number, dw: number, dh: number, dx: number, dy: number;
+              // 创建FormData对象
+              const formData = new FormData();
+              formData.append('image', blob, 'image.jpg');
               
-              if (imgRatio > targetRatio) {
-                // 原图比例宽于3:4，需要裁掉两侧
-                sh = img.height;
-                sw = sh * targetRatio;
-                sx = (img.width - sw) / 2;
-                sy = 0;
-                dw = targetWidth;
-                dh = targetHeight;
-                dx = 0;
-                dy = 0;
-              } else {
-                // 原图比例窄于3:4，需要裁掉上下
-                sw = img.width;
-                sh = sw / targetRatio;
-                sx = 0;
-                sy = (img.height - sh) / 2;
-                dw = targetWidth;
-                dh = targetHeight;
-                dx = 0;
-                dy = 0;
+              // 添加调试日志
+              console.log('准备向API发送请求:', {
+                url: '/api/enhance',
+                blobSize: blob.size,
+                currentHost: window.location.origin
+              });
+              
+              // 发送请求到API - 使用相对路径和适当的凭据设置
+              const apiResponse = await fetch('/api/enhance', {
+                method: 'POST',
+                body: formData,
+                // 移除可能导致问题的CORS设置
+                // mode: 'cors',
+                // credentials: 'omit',
+              });
+              
+              if (!apiResponse.ok) {
+                const errorText = await apiResponse.text();
+                console.error('API响应错误:', errorText);
+                throw new Error(`API返回错误: ${apiResponse.status}`);
               }
               
-              // 居中绘制图像，保持3:4比例
-              ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+              const result = await apiResponse.json();
+              
+              if (result.success && result.imageUrl) {
+                // 设置处理后的图片
+                const finalImage = await fetch(result.imageUrl);
+                const finalImageBlob = await finalImage.blob();
+                const finalImageUrl = URL.createObjectURL(finalImageBlob);
+                
+                // 保存当前模式下的处理结果
+                setProcessedImages(prev => ({
+                  ...prev,
+                  [mode]: finalImageUrl
+                }));
+                
+                setProcessedImage(finalImageUrl);
+                setProgress(100);
+                setIsProcessing(false);
+                
+                // 获取处理后图片尺寸
+                const processedImg = new Image();
+                processedImg.onload = () => {
+                  setProcessedDimensions(prev => ({
+                    ...prev,
+                    [mode]: { width: processedImg.width, height: processedImg.height }
+                  }));
+                };
+                processedImg.src = finalImageUrl;
+                
+                // 显示成功提示
+                toast({
+                  variant: "default",
+                  title: t(`notifications.processing.success.${mode}` as const),
+                  description: t('notifications.processing.successText'),
+                });
+              } else {
+                throw new Error(result.error || '图片处理失败');
+              }
             } else {
-              // 朋友圈模式下执行等比例缩放
-              ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+              // 计算目标尺寸，根据不同模式进行处理
+              let targetWidth: number = 0;
+              let targetHeight: number = 0;
+              
+              if (mode === 'wechat') {
+                // 朋友圈模式：短边1080px，长边等比例缩放
+                if (img.width < img.height) {
+                  // 图片是竖向的，宽度是短边
+                  targetWidth = 1080;
+                  targetHeight = Math.round((img.height / img.width) * 1080);
+                } else {
+                  // 图片是横向的，高度是短边
+                  targetHeight = 1080;
+                  targetWidth = Math.round((img.width / img.height) * 1080);
+                }
+              } else if (mode === 'xiaohongshu') {
+                // 小红书模式：3:4比例，尺寸为1280*1706像素
+                targetWidth = 1280;
+                targetHeight = 1706;
+              }
+
+              // 创建canvas来调整图片尺寸
+              const canvas = document.createElement('canvas');
+              canvas.width = targetWidth;
+              canvas.height = targetHeight;
+              const ctx = canvas.getContext('2d');
+              
+              if (ctx) {
+                // 绘制调整后的图片（居中裁剪方式）
+                if (mode === 'xiaohongshu') {
+                  // 小红书模式下执行居中裁剪
+                  // 先填充白色背景
+                  ctx.fillStyle = '#ffffff';
+                  ctx.fillRect(0, 0, targetWidth, targetHeight);
+                  
+                  // 计算如何以3:4比例裁剪和缩放图片
+                  const targetRatio = 3 / 4; // 目标比例3:4
+                  const imgRatio = img.width / img.height;
+                  
+                  let sw: number, sh: number, sx: number, sy: number, dw: number, dh: number, dx: number, dy: number;
+                  
+                  if (imgRatio > targetRatio) {
+                    // 原图比例宽于3:4，需要裁掉两侧
+                    sh = img.height;
+                    sw = sh * targetRatio;
+                    sx = (img.width - sw) / 2;
+                    sy = 0;
+                    dw = targetWidth;
+                    dh = targetHeight;
+                    dx = 0;
+                    dy = 0;
+                  } else {
+                    // 原图比例窄于3:4，需要裁掉上下
+                    sw = img.width;
+                    sh = sw / targetRatio;
+                    sx = 0;
+                    sy = (img.height - sh) / 2;
+                    dw = targetWidth;
+                    dh = targetHeight;
+                    dx = 0;
+                    dy = 0;
+                  }
+                  
+                  // 居中绘制图像，保持3:4比例
+                  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+                } else {
+                  // 朋友圈模式下执行等比例缩放
+                  ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+                }
+                
+                // 将canvas内容转换为图片
+                const processedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                
+                // 保存当前模式下的处理结果
+                setProcessedImages(prev => ({
+                  ...prev,
+                  [mode]: processedDataUrl
+                }));
+                
+                // 设置处理后的图片
+                setProcessedImage(processedDataUrl);
+                
+                // 完成处理
+                setProgress(100);
+                setIsProcessing(false);
+                
+                // 获取处理后图片尺寸
+                const processedImg = new Image();
+                processedImg.onload = () => {
+                  setProcessedDimensions(prev => ({
+                    ...prev,
+                    [mode]: { width: processedImg.width, height: processedImg.height }
+                  }));
+                };
+                processedImg.src = processedDataUrl;
+              } else {
+                // 如果无法获取canvas上下文，回退到原图
+                setProcessedImage(imageToProcess);
+                setProgress(100);
+                setIsProcessing(false);
+                
+                // 使用toast显示错误
+                toast({
+                  variant: "destructive",
+                  title: t('notifications.processing.failure'),
+                  description: t('notifications.processing.failureText'),
+                });
+              }
             }
-            
-            // 将canvas内容转换为图片 - 使用较低的质量进行隐形压缩（0.75而不是0.92）
-            const processedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
-            
-            // 保存当前模式下的处理结果
-            setProcessedImages(prev => ({
-              ...prev,
-              [mode]: processedDataUrl
-            }));
-            
-            // 设置处理后的图片
-            setProcessedImage(processedDataUrl);
-            
-            // 完成处理
-            setProgress(100);
-            setIsProcessing(false);
-            
-            // 获取处理后图片尺寸
-            const processedImg = new Image();
-            processedImg.onload = () => {
-              setProcessedDimensions(prev => ({
-                ...prev,
-                [mode]: { width: processedImg.width, height: processedImg.height }
-              }));
-            };
-            processedImg.src = processedDataUrl;
-            
-            // 显示成功提示
-            toast({
-              title: mode === 'wechat' 
-                ? t('notifications.processing.success.wechat') 
-                : t('notifications.processing.success.xiaohongshu'),
-              description: t('notifications.processing.successText'),
-            });
-          } else {
-            // 如果无法获取canvas上下文，回退到原图
-            setProcessedImage(uploadedImage);
+          } catch (error) {
+            console.error('处理图片时出错:', error);
+            // 处理失败时回退到原图
+            setProcessedImage(imageToProcess);
             setProgress(100);
             setIsProcessing(false);
             
@@ -559,43 +592,52 @@ export default function Home() {
             toast({
               variant: "destructive",
               title: t('notifications.processing.failure'),
-              description: t('notifications.processing.failureText'),
+              description: error instanceof Error ? error.message : t('notifications.processing.failureText'),
             });
+          } finally {
+            // 确保清除进度条计时器
+            clearInterval(progressInterval);
           }
-        }
-      } catch (error) {
-        console.error('处理图片时出错:', error);
-        // 处理失败时回退到原图
-        setProcessedImage(uploadedImage);
+        };
+        
+        img.onerror = () => {
+          // 加载图片失败
+          setIsProcessing(false);
+          setProgress(0);
+        
+          // 使用toast显示错误
+          toast({
+            variant: "destructive",
+            title: t('notifications.processing.loadFailure'),
+            description: t('notifications.processing.loadFailureText'),
+          });
+        };
+        
+        img.src = imageToProcess;
+      } else {
+        // 直接显示已有的处理结果
+        setProcessedImage(processedImages[mode]);
         setProgress(100);
         setIsProcessing(false);
         
-        // 使用toast显示错误
+        // 显示成功提示
         toast({
-          variant: "destructive",
-          title: t('notifications.processing.failure'),
-          description: error instanceof Error ? error.message : t('notifications.processing.failureText'),
+          variant: "default",
+          title: t(`notifications.processing.success.${mode}` as const),
+          description: t('notifications.processing.successText'),
         });
-      } finally {
-        // 确保清除进度条计时器
-        clearInterval(progressInterval);
       }
-    };
-    
-    img.onerror = () => {
-      // 加载图片失败
-      setIsProcessing(false);
+    } catch (error) {
+      console.error('Error processing image:', error);
       setProgress(0);
+      setIsProcessing(false);
       
-      // 使用toast显示错误
       toast({
         variant: "destructive",
-        title: t('notifications.processing.loadFailure'),
-        description: t('notifications.processing.loadFailureText'),
+        title: t('notifications.processing.failure'),
+        description: t('notifications.processing.failureText'),
       });
-    };
-    
-    img.src = uploadedImage;
+    }
   };
 
   const downloadImage = () => {
@@ -969,7 +1011,7 @@ export default function Home() {
                   {mode === '4k' && processedImage ? (
                     <div className="relative w-full h-[300px] md:h-[650px] overflow-hidden rounded-lg mb-4" ref={imageContainerRef}>
                       {/* 全屏按钮 */}
-                      <div className="absolute bottom-2 right-2 z-20">
+                      <div className="absolute bottom-2 right-2 z-20 hidden md:block">
                         <button
                           className="bg-black/50 hover:bg-black/70 rounded-full p-1.5 transition-colors"
                           onClick={toggleFullscreen}
@@ -1041,7 +1083,7 @@ export default function Home() {
                       )}
                       
                       {/* 全屏按钮 */}
-                      <div className="absolute bottom-2 right-2 z-20">
+                      <div className="absolute bottom-2 right-2 z-20 hidden md:block">
                         <button
                           className="bg-black/50 hover:bg-black/70 rounded-full p-1.5 transition-colors"
                           onClick={toggleFullscreen}
