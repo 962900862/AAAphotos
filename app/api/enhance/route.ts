@@ -1,4 +1,5 @@
-import { intl } from 'di18n-react';
+// import { intl } from 'di18n-react';
+import { intl } from '@/lib/intl-mock';
 import { NextRequest, NextResponse } from 'next/server';
 import { client } from '@gradio/client';
 

@@ -1,6 +1,7 @@
 'use client';
 
-import { intl } from 'di18n-react';
+// import { intl } from 'di18n-react';
+import { intl } from '@/lib/intl-mock';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';

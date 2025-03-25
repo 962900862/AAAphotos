@@ -1,4 +1,5 @@
-import { intl } from 'di18n-react';
+// import { intl } from 'di18n-react';
+import { intl } from '@/lib/intl-mock';
 ('use client');
 
 import Link from 'next/link';
