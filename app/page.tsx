@@ -85,6 +85,7 @@ export default function Home() {
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const [modeChanged, setModeChanged] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [processingSpeed, setProcessingSpeed] = useState<'high' | 'balanced' | 'fast'>('balanced');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const uploadZoneRef = useRef<HTMLDivElement>(null);
@@ -421,6 +422,57 @@ export default function Home() {
     try {
       let imageToProcess = uploadedImage;
       
+      // 对大图片进行额外优化处理
+      if (mode === '4k' && imageDimensions.width > 2048) {
+        // 显示处理提示
+        toast({
+          title: "正在优化图片",
+          description: "大图片正在进行优化处理，请稍等片刻...",
+          duration: 3000,
+        });
+        
+        // 进一步压缩大图片以加快API处理速度
+        const img = new Image();
+        img.src = imageToProcess;
+        await new Promise((resolve) => {
+          img.onload = resolve;
+        });
+        
+        // 对超大图片使用更激进的压缩
+        const canvas = document.createElement('canvas');
+        // 根据选择的处理速度设置压缩参数
+        let MAX_SIZE = 1600; // 默认尺寸(balanced)
+        let quality = 0.80; // 默认质量(balanced)
+        
+        if (processingSpeed === 'high') {
+          MAX_SIZE = 2048;
+          quality = 0.90;
+        } else if (processingSpeed === 'fast') {
+          MAX_SIZE = 1280;
+          quality = 0.75;
+        }
+        
+        let newWidth, newHeight;
+        
+        if (img.width > img.height) {
+          newWidth = Math.min(img.width, MAX_SIZE);
+          newHeight = Math.round((img.height / img.width) * newWidth);
+        } else {
+          newHeight = Math.min(img.height, MAX_SIZE);
+          newWidth = Math.round((img.width / img.height) * newHeight);
+        }
+        
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        const ctx = canvas.getContext('2d');
+        
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, newWidth, newHeight);
+          // 使用较低的质量参数加快处理
+          imageToProcess = canvas.toDataURL('image/jpeg', quality);
+        }
+      }
+      
       setProgress(10);
       
       // 检查是否需要创建新的图像处理
@@ -448,7 +500,7 @@ export default function Home() {
                   clearInterval(progressInterval);
                   return 90;
                 }
-                return prev + (prev < 30 ? 1 : (prev < 60 ? 0.5 : 0.2));
+                return prev + (prev < 30 ? 2 : (prev < 60 ? 1 : 0.5)); // 加快进度条速度
               });
             }, 100);
           };
@@ -469,6 +521,14 @@ export default function Home() {
               const formData = new FormData();
               formData.append('image', blob, 'image.jpg');
               
+              // 添加API优化提示
+              formData.append('optimize', 'true'); // 告诉后端这是优化后的图片，可以使用更快的处理管道
+              formData.append('processing_speed', processingSpeed); // 传递处理速度选项
+              
+              // 设置超时时间
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
+              
               // 添加调试日志
               console.log('准备向API发送请求:', {
                 url: '/api/enhance',
@@ -480,10 +540,11 @@ export default function Home() {
               const apiResponse = await fetch('/api/enhance', {
                 method: 'POST',
                 body: formData,
-                // 移除可能导致问题的CORS设置
-                // mode: 'cors',
-                // credentials: 'omit',
+                signal: controller.signal
               });
+              
+              // 清除超时
+              clearTimeout(timeoutId);
               
               if (!apiResponse.ok) {
                 const errorText = await apiResponse.text();
@@ -988,6 +1049,33 @@ export default function Home() {
                   ? t('settings.xiaohongshuDescription')
                   : t('settings.4kDescription')}
               </p>
+              
+              {/* 4K处理速度选项 */}
+              {mode === '4k' && (
+                <div className="mt-3 border-t border-white/10 pt-3">
+                  <p className="text-xs text-gray-300 mb-2">处理速度选项:</p>
+                  <div className="flex space-x-2">
+                    <button 
+                      className={`py-1 px-2 text-xs rounded ${processingSpeed === 'high' ? 'bg-green-600' : 'bg-white/10'}`}
+                      onClick={() => setProcessingSpeed('high')}
+                    >
+                      高质量 (较慢)
+                    </button>
+                    <button 
+                      className={`py-1 px-2 text-xs rounded ${processingSpeed === 'balanced' ? 'bg-blue-600' : 'bg-white/10'}`}
+                      onClick={() => setProcessingSpeed('balanced')}
+                    >
+                      平衡
+                    </button>
+                    <button 
+                      className={`py-1 px-2 text-xs rounded ${processingSpeed === 'fast' ? 'bg-purple-600' : 'bg-white/10'}`}
+                      onClick={() => setProcessingSpeed('fast')}
+                    >
+                      快速处理
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="md:col-span-1">
