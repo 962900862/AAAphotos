@@ -16,6 +16,10 @@
     "clean": "rimraf .next out",
     "prepare": "husky install"
   },
+  "resolutions": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.772.0",
     "@aws-sdk/s3-request-presigner": "^3.772.0",
@@ -61,7 +65,7 @@
     "clsx": "^2.1.0",
     "cmdk": "^0.2.1",
     "date-fns": "^3.3.1",
-    "di18n-react": "0.1.25",
+    "di18n-react": "^0.1.25",
     "dotenv": "^16.4.5",
     "embla-carousel-react": "^8.0.0-rc17",
     "eslint": "^8.56.0",

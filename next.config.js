@@ -12,7 +12,7 @@ const nextConfig = {
   trailingSlash: true,
   distDir: 'out',
   generateBuildId: async () => 'build',
-  output: 'export',
+  // 移除output: 'export'配置以支持API路由
   webpack(config) {
     config.experiments = {
       ...config.experiments,
@@ -22,9 +22,4 @@ const nextConfig = {
   }
 };
 
-module.exports = nextConfig;
-
-module.exports = {
-  images: { unoptimized: true }, // 禁用图片优化
-  trailingSlash: true // 确保路径斜杠兼容
-}
+module.exports = nextConfig; 
