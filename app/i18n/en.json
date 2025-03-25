@@ -17,9 +17,9 @@
     "title": "AI Enhancement Settings",
     "4kMode": "One-click 4K Quality",
     "wechatMode": "WeChat Moments HD",
-    "xiaohongshuMode": "Xiaohongshu Cover",
+    "xiaohongshuMode": "Red Note Cover",
     "wechatDescription": "WeChat Moments mode: 1080px short edge, proportional scaling for long edge, ensuring clear display without compression",
-    "xiaohongshuDescription": "Xiaohongshu mode: 3:4 ratio, 1280*1706 pixels, ensuring optimal display without compression on Xiaohongshu",
+    "xiaohongshuDescription": "Red Note mode: 3:4 ratio, 1280*1706 pixels, ensuring optimal display without compression on Red Note",
     "4kDescription": "4K Blu-ray mode: Enhances to 4K level, applies Blu-ray quality detail and color enhancement (online processing, takes about 10-30 seconds depending on your internet speed)",
     "progress": "Processing Progress",
     "process": "Process",
@@ -30,19 +30,19 @@
     "title": "Mode Switched",
     "to4k": "Switched to 4K Blu-ray mode, please click the Process button",
     "toWechat": "Switched to WeChat Moments HD mode, please click the Process button",
-    "toXiaohongshu": "Switched to Xiaohongshu Cover mode, please click the Process button",
+    "toXiaohongshu": "Switched to Red Note Cover mode, please click the Process button",
     "modeSwitched": "Switched to {{mode}} mode"
   },
   "upload": {
     "dragOrClick": "Drop image here or click to upload",
     "supportedFormats": "Supports JPG, PNG and other image formats",
-    "xiaohongshuEnabled": "Xiaohongshu best cover mode enabled",
+    "xiaohongshuEnabled": "Red Note best cover mode enabled",
     "sizeLimit": "Maximum file size: 50MB"
   },
   "processing": {
     "complete": {
       "wechat": "Processing complete, ready to download or share to WeChat Moments",
-      "xiaohongshu": "Processing complete, ready to download or upload to Xiaohongshu",
+      "xiaohongshu": "Processing complete, ready to download or upload to Red Note",
       "4k": "Processing complete, ready to download your 4K Blu-ray enhanced image"
     },
     "startProcess": "Start Processing Image",
@@ -50,7 +50,7 @@
     "enhanced": {
       "4k": "4K Enhanced",
       "wechat": "WeChat Moments Optimized",
-      "xiaohongshu": "Xiaohongshu Optimized",
+      "xiaohongshu": "Red Note Optimized",
       "bluray": "4K Blu-ray Enhanced"
     }
   },
@@ -62,7 +62,7 @@
     },
     "multiPlatform": {
       "title": "Multi-platform Image Optimization",
-      "description": "Supports WeChat Moments HD images, Xiaohongshu high-definition covers, and 4K Blu-ray enhancement, meeting the image needs of various social media platforms"
+      "description": "Supports WeChat Moments HD images, Red Note high-definition covers, and 4K Blu-ray enhancement, meeting the image needs of various social media platforms"
     },
     "faceRetouching": {
       "title": "Intelligent Face Restoration",
@@ -96,14 +96,14 @@
       "q1": "How to use this tool?",
       "q2": "What image formats are supported?",
       "q3": "Will processed images take up more space?",
-      "q4": "What's the difference between Xiaohongshu cover and WeChat Moments images?",
+      "q4": "What's the difference between Red Note cover and WeChat Moments images?",
       "q5": "What is 4K Blu-ray enhancement?"
     },
     "answers": {
-      "a1": "Simply drag your image into the upload area or click to select a file, choose the required format (WeChat Moments, Xiaohongshu, or 4K Blu-ray), and click to start processing. After processing, you can download or share directly.",
+      "a1": "Simply drag your image into the upload area or click to select a file, choose the required format (WeChat Moments, Red Note, or 4K Blu-ray), and click to start processing. After processing, you can download or share directly.",
       "a2": "Currently supports mainstream image formats, including JPG, PNG, WEBP, etc. It is recommended to upload the original image for the best results.",
       "a3": "No, we use intelligent compression technology to maintain a reasonable file size while improving image quality.",
-      "a4": "Xiaohongshu covers are optimized according to the platform's recommended 3:4 ratio and then enhanced with pixel AI, while WeChat Moments images maintain the HD standard with a short edge of 1080px.",
+      "a4": "Red Note covers are optimized according to the platform's recommended 3:4 ratio and then enhanced with pixel AI, while WeChat Moments images maintain the HD standard with a short edge of 1080px.",
       "a5": "We use the CodeFormer AI model for online processing, which can intelligently increase image resolution to 4K level, enhance details and colors, repair faces and backgrounds, making photos clearer and sharper, presenting Blu-ray level high-definition image quality. This service is completely free."
     }
   },
@@ -134,7 +134,7 @@
       "success": {
         "4k": "4K Blu-ray processing complete",
         "wechat": "WeChat Moments processing complete",
-        "xiaohongshu": "Xiaohongshu processing complete"
+        "xiaohongshu": "Red Note processing complete"
       },
       "successText": "Image processed successfully, ready to download or share.",
       "failure": "Image Processing Failed",
