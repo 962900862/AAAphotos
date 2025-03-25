@@ -243,10 +243,55 @@ export default function RootLayout({
             window.siteLanguage = 'zh';  // 默认中文
             window.originalTexts = new Map();  // 存储原始文本
             
+            // 检测浏览器语言并自动设置语言
+            window.detectBrowserLanguage = function() {
+              try {
+                // 获取浏览器语言
+                const browserLang = navigator.language || navigator.userLanguage;
+                console.log("检测到浏览器语言:", browserLang);
+                
+                // 如果已经有语言偏好存储在localStorage中，优先使用它
+                const savedLang = localStorage.getItem('preferred-language');
+                if (savedLang) {
+                  console.log("使用已保存的语言偏好:", savedLang);
+                  window.siteLanguage = savedLang;
+                  return savedLang;
+                }
+                
+                // 根据浏览器语言设置默认语言
+                // 如果浏览器语言以en开头，设置为英文；否则默认中文
+                if (browserLang && browserLang.toLowerCase().startsWith('en')) {
+                  console.log("设置默认语言为英文");
+                  window.siteLanguage = 'en';
+                  // 立即应用英文翻译
+                  setTimeout(() => {
+                    window.translate();
+                  }, 300); // 给页面一点时间加载
+                  return 'en';
+                }
+                
+                return 'zh'; // 默认中文
+              } catch (error) {
+                console.error("检测浏览器语言出错:", error);
+                return 'zh'; // 出错时默认使用中文
+              }
+            };
+            
+            // 保存用户语言偏好
+            window.saveLanguagePreference = function(lang) {
+              try {
+                localStorage.setItem('preferred-language', lang);
+                console.log("语言偏好已保存:", lang);
+              } catch (error) {
+                console.error("保存语言偏好出错:", error);
+              }
+            };
+            
             // 添加翻译函数到window对象 - 优化版本
             window.translate = function() {
               try {
                 const isCurrentlyEnglish = window.siteLanguage === 'en';
+                const newLanguage = isCurrentlyEnglish ? 'zh' : 'en';
                 
                 // 更新按钮文本和状态，立即响应用户操作
                 const btn = document.getElementById('translator-btn');
@@ -309,6 +354,9 @@ export default function RootLayout({
                       btn.textContent = '🇨🇳 中文';
                     }
                     
+                    // 保存用户语言偏好
+                    window.saveLanguagePreference(window.siteLanguage);
+                    
                     // 恢复按钮状态
                     btn.disabled = false;
                     
@@ -333,6 +381,14 @@ export default function RootLayout({
             window.initTranslator = function() {
               const btn = document.getElementById('translator-btn');
               if (btn) {
+                // 根据当前语言设置按钮文本
+                const detectedLang = window.detectBrowserLanguage();
+                if (detectedLang === 'en') {
+                  btn.textContent = '🇨🇳 中文';
+                } else {
+                  btn.textContent = '🇺🇸 English';
+                }
+                
                 // 添加点击事件监听器
                 btn.onclick = function(e) {
                   e.preventDefault();
