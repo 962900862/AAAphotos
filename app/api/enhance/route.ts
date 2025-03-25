@@ -1,7 +1,24 @@
 // import { intl } from 'di18n-react';
-import { intl } from '@/lib/intl-mock';
+// import { intl } from '../../lib/intl-mock';
 import { NextRequest, NextResponse } from 'next/server';
 import { client } from '@gradio/client';
+
+// 内联定义intl对象
+const intl = {
+  t: (message: string, params?: any): string => {
+    if (params) {
+      let result = message;
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined) {
+          const regex = new RegExp(`{${key}}`, 'g');
+          result = result.replace(regex, String(params[key]));
+        }
+      });
+      return result;
+    }
+    return message;
+  }
+};
 
 // 设置最大执行时间为60秒（Hobby计划的最大值）
 export const maxDuration = 60;

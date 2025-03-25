@@ -1,6 +1,26 @@
-import { intl } from 'di18n-react';
+'use client';
+
+// import { intl } from 'di18n-react';
+// import { intl } from '@/lib/intl-mock';
 import Link from 'next/link';
 import { Metadata } from 'next';
+
+// 内联定义intl对象，避免导入问题
+const intl = {
+  t: (message: string, params?: any): string => {
+    if (params) {
+      let result = message;
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined) {
+          const regex = new RegExp(`{${key}}`, 'g');
+          result = result.replace(regex, String(params[key]));
+        }
+      });
+      return result;
+    }
+    return message;
+  }
+};
 
 export const metadata: Metadata = {
   title: intl.t('2024年最佳微信朋友圈高清图片工具对比分析 | Social Photo'),

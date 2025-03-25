@@ -1,6 +1,24 @@
+'use client';
+
 // import { intl } from 'di18n-react';
-import { intl } from '@/lib/intl-mock';
-('use client');
+// import { intl } from '../../../lib/intl-mock';
+
+// 内联定义intl对象，避免导入问题
+const intl = {
+  t: (message: string, params?: any): string => {
+    if (params) {
+      let result = message;
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined) {
+          const regex = new RegExp(`{${key}}`, 'g');
+          result = result.replace(regex, String(params[key]));
+        }
+      });
+      return result;
+    }
+    return message;
+  }
+};
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
