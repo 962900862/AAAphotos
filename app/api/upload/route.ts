@@ -16,10 +16,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 判断是否是移动设备
-    const userAgent = request.headers.get('user-agent') || '';
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-    
     // 验证文件类型
     const allowedTypes = (process.env.ALLOWED_IMAGE_TYPES || 'image/jpeg,image/png').split(',')
     if (!allowedTypes.includes(file.type)) {
@@ -29,19 +25,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 验证文件大小 - 移动设备限制为40MB，桌面设备限制为50MB
-    const maxSize = isMobile 
-      ? Number(process.env.MOBILE_MAX_IMAGE_SIZE) || 40 * 1024 * 1024 // 40MB for mobile
-      : Number(process.env.MAX_IMAGE_SIZE) || 50 * 1024 * 1024 // 50MB for desktop
-      
+    // 验证文件大小
+    const maxSize = Number(process.env.MAX_IMAGE_SIZE) || 5 * 1024 * 1024 // 5MB
     if (file.size > maxSize) {
-      const errorMessage = isMobile 
-        ? 'File too large. Mobile uploads limited to 40MB.'
-        : 'File too large. Maximum size is 50MB.';
-      
       return NextResponse.json(
-        { error: errorMessage },
-        { status: 413 }
+        { error: 'File too large' },
+        { status: 400 }
       )
     }
 

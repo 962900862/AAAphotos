@@ -37,8 +37,7 @@
     "dragOrClick": "拖入图片或点击上传",
     "supportedFormats": "支持 JPG、PNG 等图片格式",
     "xiaohongshuEnabled": "小红书最佳封面模式已开启",
-    "maxSize": "最大支持 {size}MB 的图片",
-    "mobileSizeLimit": "手机端最大支持 {size}MB 的图片"
+    "sizeLimit": "最大文件大小: 50MB"
   },
   "processing": {
     "complete": {
@@ -121,39 +120,33 @@
     "switching": "切换中..."
   },
   "notifications": {
-    "upload": {
-      "success": "图片上传成功",
-      "failure": "图片上传失败",
-      "optimizing": "正在优化图片...",
-      "optimized": "图片已优化，质量提升了{percent}%",
-      "optimizing_large": "正在优化图片以获得最佳显示效果",
-      "original_size": "原始大小: {size}MB",
-      "optimized_size": "优化后: {size}MB",
-      "mobile_size_limit": "手机用户上传图片不应超过40MB",
-      "error_413": "图片太大导致上传失败(413错误)",
-      "try_smaller": "请尝试上传较小的图片或让我们为您优化"
+    "download": {
+      "success": "下载成功",
+      "shareText": "图片已下载，可以分享到社交平台",
+      "failure": "下载失败",
+      "failureText": "无法下载图片，请重试"
     },
     "processing": {
-      "start": "开始处理图片...",
-      "progress": "处理中 {progress}%",
-      "complete": "处理完成",
       "success": {
-        "wechat": "处理完成! 已优化为朋友圈尺寸",
-        "xiaohongshu": "处理完成! 已优化为小红书尺寸"
+        "wechat": "朋友圈超清处理完成",
+        "xiaohongshu": "小红书封面处理完成",
+        "4k": "4K蓝光处理完成"
       },
-      "successText": "现在您可以下载优化后的图片",
+      "successText": "图片处理已完成，可以预览和下载",
       "failure": "处理失败",
-      "failureText": "请重试或尝试使用不同的图片"
+      "failureText": "图片处理失败，请重试",
+      "loadFailure": "图片加载失败",
+      "loadFailureText": "无法加载图片，请重试"
     },
-    "download": {
-      "start": "准备下载...",
-      "success": "图片已下载",
-      "failure": "下载失败，请重试"
+    "busy": {
+      "title": "处理中",
+      "text": "系统正在处理中，请等待完成后再操作"
     },
-    "fullscreen": {
-      "enter": "进入全屏模式",
-      "exit": "退出全屏模式",
-      "failure": "全屏模式切换失败"
+    "upload": {
+      "sizeLimit": {
+        "title": "文件过大",
+        "description": "上传图片最大限制为{{size}}"
+      }
     }
   }
 } 

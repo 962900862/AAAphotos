@@ -54,7 +54,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-CTFFK2YZY9" strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">

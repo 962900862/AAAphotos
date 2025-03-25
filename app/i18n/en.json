@@ -37,8 +37,7 @@
     "dragOrClick": "Drop image here or click to upload",
     "supportedFormats": "Supports JPG, PNG and other image formats",
     "xiaohongshuEnabled": "Xiaohongshu best cover mode enabled",
-    "maxSize": "Supports images up to {size}MB",
-    "mobileSizeLimit": "Mobile supports images up to {size}MB"
+    "sizeLimit": "Maximum file size: 50MB"
   },
   "processing": {
     "complete": {
@@ -125,39 +124,33 @@
     "switching": "Switching..."
   },
   "notifications": {
-    "upload": {
-      "success": "Image uploaded successfully",
-      "failure": "Image upload failed",
-      "optimizing": "Optimizing image...",
-      "optimized": "Image optimized, quality improved by {percent}%",
-      "optimizing_large": "Optimizing image for best display quality",
-      "original_size": "Original size: {size}MB",
-      "optimized_size": "Optimized: {size}MB",
-      "mobile_size_limit": "Mobile users should upload images under 40MB",
-      "error_413": "Image too large to upload (413 error)",
-      "try_smaller": "Please try with a smaller image or let us optimize it for you"
+    "download": {
+      "success": "Image downloaded successfully",
+      "shareText": "You can share it to social platforms immediately.",
+      "failure": "Download Failed",
+      "failureText": "An error occurred while downloading the image, please try again later."
     },
     "processing": {
-      "start": "Processing image...",
-      "progress": "Processing {progress}%",
-      "complete": "Processing complete",
       "success": {
-        "wechat": "Processing complete! Optimized for WeChat",
-        "xiaohongshu": "Processing complete! Optimized for Red Note"
+        "4k": "4K Blu-ray processing complete",
+        "wechat": "WeChat Moments processing complete",
+        "xiaohongshu": "Xiaohongshu processing complete"
       },
-      "successText": "You can now download the optimized image",
-      "failure": "Processing failed",
-      "failureText": "Please try again or use a different image"
+      "successText": "Image processed successfully, ready to download or share.",
+      "failure": "Image Processing Failed",
+      "failureText": "An error occurred during image processing, reverted to original image. Please try another image or try again later.",
+      "loadFailure": "Image Loading Failed",
+      "loadFailureText": "Could not load the image, please check if the format is supported or try another image."
     },
-    "download": {
-      "start": "Preparing download...",
-      "success": "Image downloaded",
-      "failure": "Download failed, please try again"
+    "busy": {
+      "title": "Please Wait",
+      "text": "System is currently processing, please wait until completion before making further operations"
     },
-    "fullscreen": {
-      "enter": "Enter fullscreen mode",
-      "exit": "Exit fullscreen mode",
-      "failure": "Failed to toggle fullscreen mode"
+    "upload": {
+      "sizeLimit": {
+        "title": "File Too Large",
+        "description": "Upload image size limit is {{size}}"
+      }
     }
   }
 } 
