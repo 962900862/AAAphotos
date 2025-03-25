@@ -61,10 +61,15 @@ export default function useImageCompressor(options?: CompressOptions): Compresso
         setStatus('compressed');
         return compressedFile;
       } catch (err: any) {
+        console.error('图片压缩失败:', err);
         setStatus('error');
-        const error = new Error(`图片压缩失败: ${err.message}`);
+        const errorMessage = err?.message || '未知错误';
+        const error = new Error(`图片压缩失败: ${errorMessage}`);
         setError(error);
-        throw error;
+        
+        // 出错时返回原文件，而不是抛出异常
+        console.log('返回未压缩的原始文件');
+        return file;
       }
     },
     [adaptiveCompressor, options]
@@ -96,6 +101,14 @@ export default function useImageCompressor(options?: CompressOptions): Compresso
         // 将压缩后的文件转回dataURL
         const compressedDataURL = await fileToDataURL(compressedFile);
         
+        // 如果返回的dataURL为空，表示转换失败，使用原始dataURL
+        if (!compressedDataURL) {
+          console.warn('压缩后的dataURL为空，使用原始dataURL');
+          setStatus('error');
+          setError(new Error('无法将压缩后的文件转换为dataURL'));
+          return { compressedFile, compressedDataURL: dataURL };
+        }
+        
         // 计算压缩比
         const compressedSize = compressedFile.size;
         const compressionRatio = originalSize / compressedSize;
@@ -110,10 +123,20 @@ export default function useImageCompressor(options?: CompressOptions): Compresso
         setStatus('compressed');
         return { compressedFile, compressedDataURL };
       } catch (err: any) {
+        console.error('图片压缩或转换失败:', err);
         setStatus('error');
-        const error = new Error(`图片压缩失败: ${err.message}`);
+        const errorMessage = err?.message || '未知错误';
+        const error = new Error(`图片处理失败: ${errorMessage}`);
         setError(error);
-        throw error;
+        
+        // 创建一个与原始文件相同的文件
+        const originalFile = dataURLtoFile(dataURL, filename);
+        
+        // 出错时返回原始数据
+        return { 
+          compressedFile: originalFile, 
+          compressedDataURL: dataURL 
+        };
       }
     },
     [adaptiveCompressor, options]
