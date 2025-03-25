@@ -122,7 +122,7 @@
   "notifications": {
     "download": {
       "success": "下载成功",
-      "shareText": "图片已下载，可以分享到社交平台",
+      "shareText": "图片已下载，手机用户记得点击右上角保存，可以分享到社交平台",
       "failure": "下载失败",
       "failureText": "无法下载图片，请重试"
     },

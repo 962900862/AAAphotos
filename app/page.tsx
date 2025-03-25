@@ -192,20 +192,51 @@ export default function Home() {
       const reader = new FileReader();
       reader.onload = (event) => {
         const dataUrl = event.target?.result as string;
-        setUploadedImage(dataUrl);
-        setProcessedImage(null);
-        // 重置所有模式的处理结果
-        setProcessedImages({
-          wechat: null,
-          xiaohongshu: null,
-          '4k': null
-        });
-        setProgress(0);
         
-        // 获取图片尺寸
+        // 获取图片尺寸并预处理图片
         const img = new Image();
-        img.onload = () => {
+        img.onload = async () => {
           setImageDimensions({ width: img.width, height: img.height });
+          
+          // 对于大图片，使用朋友圈超清参数进行预处理
+          let processedDataUrl = dataUrl;
+          if (img.width > 2048) {
+            // 使用微信朋友圈超清处理参数（短边1080px，等比例缩放）
+            const ratio = img.height / img.width;
+            let targetWidth, targetHeight;
+            
+            if (img.width < img.height) {
+              // 图片是竖向的，宽度是短边
+              targetWidth = 1080;
+              targetHeight = Math.round(targetWidth * ratio);
+            } else {
+              // 图片是横向的，高度是短边
+              targetHeight = 1080;
+              targetWidth = Math.round(targetHeight / ratio);
+            }
+            
+            // 创建canvas进行处理
+            const canvas = document.createElement('canvas');
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            const ctx = canvas.getContext('2d');
+            
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+              processedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+            }
+          }
+          
+          // 更新状态
+          setUploadedImage(processedDataUrl);
+          setProcessedImage(null);
+          // 重置所有模式的处理结果
+          setProcessedImages({
+            wechat: null,
+            xiaohongshu: null,
+            '4k': null
+          });
+          setProgress(0);
         };
         img.src = dataUrl;
       };
@@ -235,20 +266,51 @@ export default function Home() {
       const reader = new FileReader();
       reader.onload = (event) => {
         const dataUrl = event.target?.result as string;
-        setUploadedImage(dataUrl);
-        setProcessedImage(null);
-        // 重置所有模式的处理结果
-        setProcessedImages({
-          wechat: null,
-          xiaohongshu: null,
-          '4k': null
-        });
-        setProgress(0);
         
-        // 获取图片尺寸
+        // 获取图片尺寸并预处理图片
         const img = new Image();
-        img.onload = () => {
+        img.onload = async () => {
           setImageDimensions({ width: img.width, height: img.height });
+          
+          // 对于大图片，使用朋友圈超清参数进行预处理
+          let processedDataUrl = dataUrl;
+          if (img.width > 2048) {
+            // 使用微信朋友圈超清处理参数（短边1080px，等比例缩放）
+            const ratio = img.height / img.width;
+            let targetWidth, targetHeight;
+            
+            if (img.width < img.height) {
+              // 图片是竖向的，宽度是短边
+              targetWidth = 1080;
+              targetHeight = Math.round(targetWidth * ratio);
+            } else {
+              // 图片是横向的，高度是短边
+              targetHeight = 1080;
+              targetWidth = Math.round(targetHeight / ratio);
+            }
+            
+            // 创建canvas进行处理
+            const canvas = document.createElement('canvas');
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            const ctx = canvas.getContext('2d');
+            
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+              processedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+            }
+          }
+          
+          // 更新状态
+          setUploadedImage(processedDataUrl);
+          setProcessedImage(null);
+          // 重置所有模式的处理结果
+          setProcessedImages({
+            wechat: null,
+            xiaohongshu: null,
+            '4k': null
+          });
+          setProgress(0);
         };
         img.src = dataUrl;
       };
@@ -358,11 +420,6 @@ export default function Home() {
 
     try {
       let imageToProcess = uploadedImage;
-      
-      // 对于4K模式下的大图片，先进行压缩（无感处理）
-      if (mode === '4k') {
-        imageToProcess = await compressImage(uploadedImage, 2048);
-      }
       
       setProgress(10);
       
