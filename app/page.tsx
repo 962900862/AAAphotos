@@ -138,7 +138,7 @@ export default function Home() {
     const fileSizeInMB = file.size / (1024 * 1024);
     
     // 为手机用户添加特别提示
-    if (isMobile && fileSizeInMB > 4) {
+    if (isMobile && fileSizeInMB > 40) {
       toast({
         variant: "destructive",
         title: t('notifications.upload.error_413'),
@@ -151,8 +151,8 @@ export default function Home() {
       const dataUrl = event.target?.result as string;
       
       // 检查图片大小，如果过大则优化
-      // 对于手机用户，强制优化大于2MB的图片，以避免413错误
-      if ((isMobile && fileSizeInMB > 2) || fileSizeInMB > 50) {
+      // 对于手机用户，强制优化大于10MB的图片，以避免413错误
+      if ((isMobile && fileSizeInMB > 10) || fileSizeInMB > 50) {
         try {
           setIsCompressing(true);
           toast({
@@ -235,7 +235,7 @@ export default function Home() {
     const fileSizeInMB = file.size / (1024 * 1024);
     
     // 为手机用户添加特别提示
-    if (isMobile && fileSizeInMB > 4) {
+    if (isMobile && fileSizeInMB > 40) {
       toast({
         variant: "destructive",
         title: t('notifications.upload.error_413'),
@@ -248,8 +248,8 @@ export default function Home() {
       const dataUrl = event.target?.result as string;
       
       // 检查图片大小，如果过大则优化
-      // 对于手机用户，强制优化大于2MB的图片，以避免413错误
-      if ((isMobile && fileSizeInMB > 2) || fileSizeInMB > 50) {
+      // 对于手机用户，强制优化大于10MB的图片，以避免413错误
+      if ((isMobile && fileSizeInMB > 10) || fileSizeInMB > 50) {
         try {
           setIsCompressing(true);
           toast({
@@ -1211,7 +1211,7 @@ export default function Home() {
                   </p>
                   <p className="text-xs md:text-sm text-gray-400 mt-1">
                     {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-                      ? t('upload.mobileSizeLimit', { size: 4 })
+                      ? t('upload.mobileSizeLimit', { size: 40 })
                       : t('upload.maxSize', { size: 50 })}
                   </p>
                   {mode === 'xiaohongshu' && (

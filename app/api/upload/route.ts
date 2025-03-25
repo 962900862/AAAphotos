@@ -29,15 +29,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 验证文件大小 - 移动设备限制为4MB，桌面设备限制为10MB
+    // 验证文件大小 - 移动设备限制为40MB，桌面设备限制为50MB
     const maxSize = isMobile 
-      ? Number(process.env.MOBILE_MAX_IMAGE_SIZE) || 4 * 1024 * 1024 // 4MB for mobile
-      : Number(process.env.MAX_IMAGE_SIZE) || 10 * 1024 * 1024 // 10MB for desktop
+      ? Number(process.env.MOBILE_MAX_IMAGE_SIZE) || 40 * 1024 * 1024 // 40MB for mobile
+      : Number(process.env.MAX_IMAGE_SIZE) || 50 * 1024 * 1024 // 50MB for desktop
       
     if (file.size > maxSize) {
       const errorMessage = isMobile 
-        ? 'File too large. Mobile uploads limited to 4MB.'
-        : 'File too large. Maximum size is 10MB.';
+        ? 'File too large. Mobile uploads limited to 40MB.'
+        : 'File too large. Maximum size is 50MB.';
       
       return NextResponse.json(
         { error: errorMessage },

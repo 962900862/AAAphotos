@@ -129,7 +129,7 @@
       "optimizing_large": "正在优化图片以获得最佳显示效果",
       "original_size": "原始大小: {size}MB",
       "optimized_size": "优化后: {size}MB",
-      "mobile_size_limit": "手机用户上传图片不应超过4MB",
+      "mobile_size_limit": "手机用户上传图片不应超过40MB",
       "error_413": "图片太大导致上传失败(413错误)",
       "try_smaller": "请尝试上传较小的图片或让我们为您优化"
     },

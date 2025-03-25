@@ -133,7 +133,7 @@
       "optimizing_large": "Optimizing image for best display quality",
       "original_size": "Original size: {size}MB",
       "optimized_size": "Optimized: {size}MB",
-      "mobile_size_limit": "Mobile users should upload images under 4MB",
+      "mobile_size_limit": "Mobile users should upload images under 40MB",
       "error_413": "Image too large to upload (413 error)",
       "try_smaller": "Please try with a smaller image or let us optimize it for you"
     },
