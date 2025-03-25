@@ -280,3 +280,65 @@
   width: 1rem;
   border-radius: 9999px;
 }
+
+/* 翻译按钮样式 - 增强版本 */
+.translator-btn,
+#translator-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999; /* 提高层级确保显示在最上层 */
+  padding: 10px 16px;
+  background-color: rgba(0, 0, 0, 0.7); /* 更深的背景色增加可见度 */
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3); /* 更明显的边框 */
+  border-radius: 25px; /* 更圆的按钮 */
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* 更明显的阴影 */
+  transition: all 0.2s ease; /* 更快的过渡效果 */
+  outline: none; /* 移除默认的焦点样式 */
+  -webkit-tap-highlight-color: transparent; /* 移除移动设备上的点击高亮 */
+  backdrop-filter: blur(4px); /* 背景模糊效果 */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); /* 文字阴影增加可读性 */
+  user-select: none; /* 防止文本被选中 */
+}
+
+.translator-btn:hover,
+#translator-btn:hover {
+  background-color: rgba(0, 0, 0, 0.85);
+  transform: translateY(-2px); /* 悬停时微微上移 */
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4); /* 悬停时阴影增大 */
+}
+
+.translator-btn:active,
+#translator-btn:active {
+  transform: translateY(1px); /* 点击时微微下移，提供按压感 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); /* 点击时阴影减小 */
+  background-color: rgba(0, 0, 0, 0.9); /* 点击时背景更深 */
+}
+
+/* 添加禁用状态样式 */
+.translator-btn:disabled,
+#translator-btn:disabled {
+  opacity: 0.7;
+  cursor: wait; /* 转换为等待光标 */
+  transform: none; /* 移除变换 */
+}
+
+/* 移动端适配 - 更大的点击区域 */
+@media (max-width: 768px) {
+  .translator-btn,
+  #translator-btn {
+    top: 15px;
+    right: 15px;
+    padding: 8px 12px;
+    font-size: 13px;
+    min-width: 100px; /* 确保按钮宽度足够 */
+    min-height: 40px; /* 确保按钮高度足够，易于点击 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

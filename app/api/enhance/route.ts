@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
         true,               // background_enhance
         true,               // face_upsample
         2,                  // upscale
-        0.7,                // codeformer_fidelity
+        0.9,                // codeformer_fidelity
       ]);
       
       console.log(`\n✅✅✅ 图像处理完成 - ${new Date().toISOString()} ✅✅✅\n`);
