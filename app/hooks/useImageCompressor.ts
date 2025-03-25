@@ -126,4 +126,29 @@ export default function useImageCompressor(options?: CompressOptions): Compresso
     stats,
     error
   };
+}
+
+/**
+ * 创建一个自适应压缩函数，根据设备性能和图片大小调整压缩设置
+ */
+export function createAdaptiveCompressor() {
+  // 检测设备性能
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  // 修复 deviceMemory 类型问题
+  const isLowMemoryDevice = 'deviceMemory' in navigator && (navigator as any).deviceMemory < 4;
+  
+  // 根据设备性能设置默认值
+  const defaultOptions: CompressOptions = {
+    maxWidth: isMobile ? 1800 : 3000,
+    maxHeight: isMobile ? 1800 : 3000,
+    quality: isLowMemoryDevice ? 0.6 : (isMobile ? 0.7 : 0.9),
+    maxSizeKB: isMobile ? 40096 : 51200, // 移动设备最大40MB，桌面设备50MB
+    mimeType: 'image/jpeg'
+  };
+  
+  // 返回一个封装了默认选项的压缩函数
+  return async (file: File, customOptions: Partial<CompressOptions> = {}): Promise<File> => {
+    const options = { ...defaultOptions, ...customOptions };
+    return compressImage(file, options);
+  };
 } 

@@ -37,7 +37,8 @@
     "dragOrClick": "拖入图片或点击上传",
     "supportedFormats": "支持 JPG、PNG 等图片格式",
     "xiaohongshuEnabled": "小红书最佳封面模式已开启",
-    "maxSize": "最大支持 {size}MB 的图片"
+    "maxSize": "最大支持 {size}MB 的图片",
+    "mobileSizeLimit": "手机端最大支持 {size}MB 的图片"
   },
   "processing": {
     "complete": {
@@ -127,7 +128,10 @@
       "optimized": "图片已优化，质量提升了{percent}%",
       "optimizing_large": "正在优化图片以获得最佳显示效果",
       "original_size": "原始大小: {size}MB",
-      "optimized_size": "优化后: {size}MB"
+      "optimized_size": "优化后: {size}MB",
+      "mobile_size_limit": "手机用户上传图片不应超过4MB",
+      "error_413": "图片太大导致上传失败(413错误)",
+      "try_smaller": "请尝试上传较小的图片或让我们为您优化"
     },
     "processing": {
       "start": "开始处理图片...",

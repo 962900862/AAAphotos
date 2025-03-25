@@ -134,19 +134,30 @@ export default function Home() {
       return;
     }
     
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const fileSizeInMB = file.size / (1024 * 1024);
+    
+    // 为手机用户添加特别提示
+    if (isMobile && fileSizeInMB > 4) {
+      toast({
+        variant: "destructive",
+        title: t('notifications.upload.error_413'),
+        description: t('notifications.upload.mobile_size_limit'),
+      });
+    }
+    
     const reader = new FileReader();
     reader.onload = async (event) => {
       const dataUrl = event.target?.result as string;
       
       // 检查图片大小，如果过大则优化
-      const fileSizeInMB = file.size / (1024 * 1024);
-      
-      if (fileSizeInMB > 50) { // 如果大于50MB，则优化
+      // 对于手机用户，强制优化大于2MB的图片，以避免413错误
+      if ((isMobile && fileSizeInMB > 2) || fileSizeInMB > 50) {
         try {
           setIsCompressing(true);
           toast({
             title: t('notifications.upload.optimizing'),
-            description: t('notifications.upload.optimizing_large'),
+            description: isMobile ? t('notifications.upload.mobile_size_limit') : t('notifications.upload.optimizing_large'),
           });
           
           // 优化图片
@@ -220,19 +231,30 @@ export default function Home() {
       return;
     }
     
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const fileSizeInMB = file.size / (1024 * 1024);
+    
+    // 为手机用户添加特别提示
+    if (isMobile && fileSizeInMB > 4) {
+      toast({
+        variant: "destructive",
+        title: t('notifications.upload.error_413'),
+        description: t('notifications.upload.mobile_size_limit'),
+      });
+    }
+    
     const reader = new FileReader();
     reader.onload = async (event) => {
       const dataUrl = event.target?.result as string;
       
       // 检查图片大小，如果过大则优化
-      const fileSizeInMB = file.size / (1024 * 1024);
-      
-      if (fileSizeInMB > 50) { // 如果大于50MB，则优化
+      // 对于手机用户，强制优化大于2MB的图片，以避免413错误
+      if ((isMobile && fileSizeInMB > 2) || fileSizeInMB > 50) {
         try {
           setIsCompressing(true);
           toast({
             title: t('notifications.upload.optimizing'),
-            description: t('notifications.upload.optimizing_large'),
+            description: isMobile ? t('notifications.upload.mobile_size_limit') : t('notifications.upload.optimizing_large'),
           });
           
           // 优化图片
@@ -1188,7 +1210,9 @@ export default function Home() {
                     {t('upload.supportedFormats')}
                   </p>
                   <p className="text-xs md:text-sm text-gray-400 mt-1">
-                    {t('upload.maxSize', { size: 50 })}
+                    {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+                      ? t('upload.mobileSizeLimit', { size: 4 })
+                      : t('upload.maxSize', { size: 50 })}
                   </p>
                   {mode === 'xiaohongshu' && (
                     <div className="mt-3 md:mt-4 flex items-center bg-[#ff2e51]/10 rounded-full px-2 md:px-3 py-1">

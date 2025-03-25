@@ -37,7 +37,8 @@
     "dragOrClick": "Drop image here or click to upload",
     "supportedFormats": "Supports JPG, PNG and other image formats",
     "xiaohongshuEnabled": "Xiaohongshu best cover mode enabled",
-    "maxSize": "Supports images up to {size}MB"
+    "maxSize": "Supports images up to {size}MB",
+    "mobileSizeLimit": "Mobile supports images up to {size}MB"
   },
   "processing": {
     "complete": {
@@ -131,7 +132,10 @@
       "optimized": "Image optimized, quality improved by {percent}%",
       "optimizing_large": "Optimizing image for best display quality",
       "original_size": "Original size: {size}MB",
-      "optimized_size": "Optimized: {size}MB"
+      "optimized_size": "Optimized: {size}MB",
+      "mobile_size_limit": "Mobile users should upload images under 4MB",
+      "error_413": "Image too large to upload (413 error)",
+      "try_smaller": "Please try with a smaller image or let us optimize it for you"
     },
     "processing": {
       "start": "Processing image...",
